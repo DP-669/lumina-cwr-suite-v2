@@ -192,9 +192,27 @@ elif mode == "Validator":
                 st.warning("No transactions found.")
             else: 
                 col_err, col_list = st.columns([1, 2])
-                with col_err: st.error(f"Found {len(rep)} issues.")
+                with col_err: 
+                    st.error(f"Found {len(rep)} issues.")
                 with col_list:
-                    for item in rep: st.write(f"Line {item['line']}: {item['message']}")
+                    # Group findings by type for cleaner report
+                    criticals = [i for i in rep if i['level'] in ['CRITICAL', 'ERROR']]
+                    warnings = [i for i in rep if i['level'] == 'WARNING']
+                    
+                    if criticals:
+                        st.markdown("### 🔴 Critical Errors (Must Fix)")
+                        for item in criticals:
+                            st.error(f"**Line {item['line']}**: {item['message']}")
+                            with st.expander("View Content"):
+                                st.code(item['content'])
+                    
+                    if warnings:
+                        st.markdown("### 🟡 Warnings (Review)")
+                        for item in warnings:
+                            st.warning(f"**Line {item['line']}**: {item['message']}")
+                            
+                    if not criticals and not warnings:
+                        st.success("File is fully compliant!")
 
 elif mode == "System Health":
     st.header("System Integrity")
