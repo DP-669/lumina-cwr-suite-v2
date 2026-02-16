@@ -1,6 +1,8 @@
 # ==============================================================================
 # LUMINA BUSINESS SCHEMA
 # ==============================================================================
+# These are global business settings. 
+# Private data (Agreement Maps) has been moved to Streamlit Secrets.
 
 LUMINA_CONFIG = {
     "name": "LUMINA PUBLISHING UK",
@@ -8,13 +10,10 @@ LUMINA_CONFIG = {
     "territory": "0826"
 }
 
-AGREEMENT_MAP = {
-    "PASHALINA": "4316161", "LUKACINO": "3845006", "TARMAC": "6781310",
-    "SNOOPLE": "13990221", "MANNY": "13997451", "REDCOLA": "4165777",
-    "HOLLY PALMER": "13994635", "DEMENTIA": "13994638", "CULVERTOWN": "13994260",
-    "VANTABLACK": "13994073", "TORO ROSSO": "13994607", "MINA": "13995081",
-    "MC TROUBLE": "13996234"
-}
+# AGREEMENT_MAP is intentionally left empty here.
+# The app will look for this in Streamlit Secrets when running on the web,
+# or you can temporarily add them back here if doing deep offline testing.
+AGREEMENT_MAP = {}
 
 # ==============================================================================
 # LOCAL CONFIGURATION
