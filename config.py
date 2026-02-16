@@ -1,8 +1,8 @@
 # ==============================================================================
 # LUMINA BUSINESS SCHEMA
 # ==============================================================================
-# These are global business settings. 
-# Private data (Agreement Maps) has been moved to Streamlit Secrets.
+# Global business settings. 
+# Private Data (Agreement Maps) now lives in Streamlit Secrets for Web safety.
 
 LUMINA_CONFIG = {
     "name": "LUMINA PUBLISHING UK",
@@ -10,13 +10,13 @@ LUMINA_CONFIG = {
     "territory": "0826"
 }
 
-# AGREEMENT_MAP is intentionally left empty here.
-# The app will look for this in Streamlit Secrets when running on the web,
-# or you can temporarily add them back here if doing deep offline testing.
+# The app pulls the real map from Streamlit Secrets when on the web.
+# If you ever do offline testing, you can list them here, but keep this file 
+# empty when pushing to GitHub to maintain privacy.
 AGREEMENT_MAP = {}
 
 # ==============================================================================
 # LOCAL CONFIGURATION
 # ==============================================================================
-# The physical path to your Google Drive folder for automatic file syncing
+# Physical path for your Mac Studio's Local-Sync
 LOCAL_DRIVE_PATH = "/Users/damirprice/Library/CloudStorage/GoogleDrive-luminapub67@gmail.com/My Drive/Lumina_CWR_Processing"
