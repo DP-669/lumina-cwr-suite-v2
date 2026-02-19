@@ -85,8 +85,9 @@ if mode == "Generator":
                                 st.warning(w)
                         
                         # Generate Filename
-                        seq = 1 
-                        filename = f"CW{datetime.now().strftime('%y')}{seq:04d}LUM_319.V22"
+                        # Generate Filename (Dynamic: InputName.V22)
+                        base_name = os.path.splitext(selected_file)[0]
+                        filename = f"{base_name}.V22"
                         
                         st.write(f"Syncing {filename} to Google Drive...")
                         
@@ -158,8 +159,9 @@ if mode == "Generator":
                             s.update(label="Conversion Complete!", state="complete")
                             
                             # Generate Filename
-                            seq = 1 
-                            filename = f"CW{datetime.now().strftime('%y')}{seq:04d}LUM_319.V22"
+                            # Generate Filename (Dynamic: InputName.V22)
+                            base_name = os.path.splitext(uploaded_file.name)[0]
+                            filename = f"{base_name}.V22"
                             
                             st.success("CWR 2.2 File Ready")
                             st.download_button("Download .V22", data=cwr, file_name=filename)
