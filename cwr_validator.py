@@ -1,7 +1,10 @@
 import re
 
 class CWRValidator:
-    def process_file(self, content):
+    EXPECTED_SPU_LEN = 166
+    EXPECTED_REC_LEN = 508
+
+    def process_file(self, content, expected_catalog=None):
         lines = content.replace('\r\n', '\n').split('\n')
         lines = [l for l in lines if len(l.strip()) > 0]
         report = []
@@ -10,6 +13,7 @@ class CWRValidator:
         curr_work = None
         has_w = False
         has_p = False
+        rec_sources = set()
         TRANS_TAGS = ["REV", "NWR"]
 
         for i, line in enumerate(lines):
@@ -27,10 +31,13 @@ class CWRValidator:
                 if curr_work:
                     if not has_w: report.append({"level": "CRITICAL", "line": l_num-1, "message": f"WORK '{curr_work}' HAS NO WRITERS.", "content": ""})
                     if not has_p: report.append({"level": "CRITICAL", "line": l_num-1, "message": f"WORK '{curr_work}' HAS NO PUBLISHERS.", "content": ""})
+                    if "C" not in rec_sources or "D" not in rec_sources:
+                        report.append({"level": "CRITICAL", "line": l_num-1, "message": f"WORK '{curr_work}' IS MISSING DUAL REC RECORDS ('C' AND 'D').", "content": ""})
                 if rec in TRANS_TAGS:
                     curr_work = line[19:79].strip() 
                     has_w = False
                     has_p = False
+                    rec_sources = set()
                     stats["transactions"] += 1
             
             if rec == "SWR": has_w = True
@@ -38,7 +45,7 @@ class CWRValidator:
                 has_p = True
                 # Length Audit: strict 166 chars
                 if len(line) != 166:
-                    report.append({"level": "CRITICAL", "line": l_num, "message": f"Length Fail: SPU record is {len(line)} chars (expected 166).", "content": line})
+                    report.append({"level": "CRITICAL", "line": l_num, "message": f"Length Fail: SPU record is {len(line)} chars (required 166). FILE REJECTED.", "content": line})
 
                 # Agreement Audit: Warnings for blank/zero Agreement Num (Pos 151, 14 chars)
                 # Slices are 0-indexed: Pos 151 is index 150
@@ -58,9 +65,30 @@ class CWRValidator:
                      report.append({"level": "CRITICAL", "line": l_num, "message": f"Numeric Audit: Cut Number '{cut}' contains non-numeric characters.", "content": line})
 
             if rec == "REC":
+                source = line[262:263]
+                rec_sources.add(source)
+
                 # Length Audit: strict 508 chars (Unified Source of Truth)
-                if len(line) != 508:
-                     report.append({"level": "CRITICAL", "line": l_num, "message": f"Length Fail: REC record is {len(line)} chars (expected 508).", "content": line})
+                if len(line) != self.EXPECTED_REC_LEN:
+                     report.append({"level": "CRITICAL", "line": l_num, "message": f"Length Fail: REC record is {len(line)} chars (expected {self.EXPECTED_REC_LEN}). FILE REJECTED.", "content": line})
+                
+                # Label Verification (Pos 446, 60 chars)
+                # Index 445 to 505
+                label_val = line[445:505].strip()
+                if not label_val:
+                     report.append({"level": "CRITICAL", "line": l_num, "message": "Label Missing: REC record has blank Label field.", "content": line})
+                elif expected_catalog:
+                     # Strict matching if catalog is known
+                     # Allow fuzzy match? Startswith? Or exact?
+                     # Let's do case-insensitive containment or exact match if user wants strictness.
+                     # "Matches the expected Catalog name".
+                     if label_val.upper() != expected_catalog.upper():
+                           # Maybe catalog is "redCola" and label is "RED COLA".
+                           # Normalize spaces?
+                           norm_label = label_val.upper().replace(" ", "")
+                           norm_cat = expected_catalog.upper().replace(" ", "")
+                           if norm_label != norm_cat:
+                                report.append({"level": "ERROR", "line": l_num, "message": f"Label Mismatch: Found '{label_val}', expected '{expected_catalog}'.", "content": line})
 
             line_check = line
             if rec in TRANS_TAGS:
