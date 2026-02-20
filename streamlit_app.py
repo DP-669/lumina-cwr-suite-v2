@@ -85,9 +85,44 @@ if mode == "Generator":
                                 st.warning(w)
                         
                         # Generate Filename
-                        # Generate Filename (Dynamic: InputName.V22)
+                        # Generate Filename (Dynamic: CW + YY + NNNN + LUM + _ + UniqueId + .V22)
                         base_name = os.path.splitext(selected_file)[0]
-                        filename = f"{base_name}.V22"
+                        # Extract 3-digit unique ID (e.g. from EPP060_Metadata)
+                        # We try to get digits, defaulting to the last 3 chars of the split 
+                        unique_id = base_name.split('_')[0][-3:]
+                        if not unique_id.isalnum():
+                             unique_id = "000"
+                        
+                        yr = datetime.now().strftime("%y")
+                        filename = f"CW{yr}0001LUM_{unique_id}.V22"
+                        
+                        # --- PRE-FLIGHT CHECKLIST ---
+                        st.write("Running Mandatory Pre-Flight Checks...")
+                        
+                        # CHECK 1: Filename compliance
+                        if not (filename.startswith("CW") and "LUM_" in filename and filename.endswith(".V22")):
+                            raise ValueError(f"PRE-FLIGHT FAIL: Invalid filename format '{filename}'")
+                        
+                        cwr_lines = cwr.replace('\r\n', '\n').split('\n')
+                        hdr_line = cwr_lines[0] if cwr_lines else ""
+                        
+                        # CHECK 2: HDR Submitter LUM and Version 2.200
+                        if "LUM" not in hdr_line or "2.200" not in hdr_line:
+                            raise ValueError("PRE-FLIGHT FAIL: HDR record does not contain Submitter LUM and/or Version 2.200")
+                            
+                        # CHECK 3: SPU lines exactly 166 characters
+                        spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
+                        if not all(len(l) == 166 for l in spu_lines):
+                            raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
+                            
+                        # CHECK 4: Dual REC records ('C' and 'D')
+                        import re
+                        rec_lines = [l for l in cwr_lines if l.startswith("REC")]
+                        c_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'C'])
+                        d_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'D'])
+                        # Assuming 1 C and 1 D per NWR
+                        if c_sources == 0 or d_sources == 0 or c_sources != d_sources:
+                            raise ValueError("PRE-FLIGHT FAIL: Works are missing Dual REC records (Source C and D mismatch)")
                         
                         st.write(f"Syncing {filename} to Google Drive...")
                         
@@ -158,11 +193,41 @@ if mode == "Generator":
                             
                             s.update(label="Conversion Complete!", state="complete")
                             
-                            # Generate Filename
-                            # Generate Filename (Dynamic: InputName.V22)
+                            # Generate Filename (Dynamic: CW + YY + NNNN + LUM + _ + UniqueId + .V22)
                             base_name = os.path.splitext(uploaded_file.name)[0]
-                            filename = f"{base_name}.V22"
+                            unique_id = base_name.split('_')[0][-3:]
+                            if not unique_id.isalnum():
+                                 unique_id = "000"
+                                 
+                            yr = datetime.now().strftime("%y")
+                            filename = f"CW{yr}0001LUM_{unique_id}.V22"
                             
+                            # --- PRE-FLIGHT CHECKLIST ---
+                            st.write("Running Mandatory Pre-Flight Checks...")
+                            
+                            # CHECK 1: Filename compliance
+                            if not (filename.startswith("CW") and "LUM_" in filename and filename.endswith(".V22")):
+                                raise ValueError(f"PRE-FLIGHT FAIL: Invalid filename format '{filename}'")
+                            
+                            cwr_lines = cwr.replace('\r\n', '\n').split('\n')
+                            hdr_line = cwr_lines[0] if cwr_lines else ""
+                            
+                            # CHECK 2: HDR Submitter LUM and Version 2.200
+                            if "LUM" not in hdr_line or "2.200" not in hdr_line:
+                                raise ValueError("PRE-FLIGHT FAIL: HDR record does not contain Submitter LUM and/or Version 2.200")
+                                
+                            # CHECK 3: SPU lines exactly 166 characters
+                            spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
+                            if not all(len(l) == 166 for l in spu_lines):
+                                raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
+                                
+                            # CHECK 4: Dual REC records ('C' and 'D')
+                            rec_lines = [l for l in cwr_lines if l.startswith("REC")]
+                            c_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'C'])
+                            d_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'D'])
+                            if c_sources == 0 or d_sources == 0 or c_sources != d_sources:
+                                raise ValueError("PRE-FLIGHT FAIL: Works are missing Dual REC records (Source C and D mismatch)")
+                                
                             st.success("CWR 2.2 File Ready")
                             st.download_button("Download .V22", data=cwr, file_name=filename)
                     except Exception as e:
