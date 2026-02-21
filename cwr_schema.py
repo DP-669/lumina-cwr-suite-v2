@@ -68,8 +68,9 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("mr_share", 123, 5, data_type="numeric", pad_char="0"),
         FieldDef("sr_soc", 128, 3, data_type="alphanumeric", pad_char=" "),
         FieldDef("sr_share", 131, 5, data_type="numeric", pad_char="0"),
-        FieldDef("N", 136, 1, is_constant=True),
-        FieldDef("             ", 137, 13, is_constant=True),
+        FieldDef(" ", 136, 1, is_constant=True),
+        FieldDef("N", 137, 1, is_constant=True),
+        FieldDef("            ", 138, 12, is_constant=True),
         FieldDef("agreement", 150, 14, data_type="alphanumeric", pad_char=" "),
         FieldDef("PG", 164, 2, is_constant=True)
     ]),
@@ -120,7 +121,8 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("rec_seq", 11, 8, data_type="numeric", pad_char="0"),
         FieldDef("pub_id", 19, 9, data_type="alphanumeric", pad_char=" "),
         FieldDef("pub_name", 28, 45, data_type="alphanumeric", pad_char=" "),
-        FieldDef("              ", 73, 14, is_constant=True),
+        FieldDef("agreement", 73, 14, data_type="alphanumeric", pad_char=" "),
+        FieldDef("              ", 87, 14, is_constant=True),
         FieldDef("writer_id", 101, 9, data_type="alphanumeric", pad_char=" "),
         FieldDef("chain_id", 110, 2, data_type="numeric", pad_char="0")
     ]),
