@@ -159,7 +159,7 @@ if mode == "Generator":
                             mime="application/zip"
                         )
                 except Exception as e:
-                    st.error(f"Processing Failed: {e}")
+                    st.error(f"FATAL ERROR: {e}")
         else:
             uploaded_file = st.file_uploader("Upload CSV file manually", type="csv")
             if uploaded_file:
@@ -231,7 +231,7 @@ if mode == "Generator":
                             st.success("CWR 2.2 File Ready")
                             st.download_button("Download .V22", data=cwr, file_name=filename)
                     except Exception as e:
-                        st.error(f"Processing Failed: {e}")
+                        st.error(f"FATAL ERROR: {e}")
 
     with col2:
         st.info("""
