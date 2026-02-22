@@ -81,13 +81,20 @@ def generate_cwr_content(df, agreement_map=None):
     # Clean headers to remove BOM and quotes
     df.columns = [c.replace('ï»¿', '').replace('"', '').strip() for c in df.columns]
     
-    lines = []; engine = FormatterEngine(); now = datetime.now()
+    lines = []; engine = FormatterEngine(); now = datetime.utcnow()
     full_ipi = pad_ipi(LUMINA_CONFIG["ipi"])
     # Use passed map (from Secrets) or default to global import (likely empty in prod)
     active_map = agreement_map if agreement_map is not None else AGREEMENT_MAP
     warnings = []
 
-    lines.append(engine.build("HDR", {"sender_ipi_short": full_ipi[-9:], "sender_name": LUMINA_CONFIG["name"], "date": now.strftime("%Y%m%d"), "time": now.strftime("%H%M%S")}))
+    hdr_data = {
+        "sender_ipi_short": full_ipi[-9:],
+        "sender_name": LUMINA_CONFIG["name"],
+        "creation_date": now.strftime("%Y%m%d"),
+        "creation_time": now.strftime("%H%M%S"),
+        "transmission_date": now.strftime("%Y%m%d")
+    }
+    lines.append(engine.build("HDR", hdr_data))
     lines.append(engine.build("GRH", {}))
     t_count = 0
     for i, row in df.iterrows():

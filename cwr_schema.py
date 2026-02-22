@@ -24,9 +24,9 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("sender_ipi_short", 5, 9, data_type="numeric", pad_char="0"),
         FieldDef("sender_name", 14, 45, data_type="alphanumeric", pad_char=" "),
         FieldDef("01.10", 61, 5, is_constant=True),
-        FieldDef("date", 66, 8, is_constant=True), # Passed from dict as "date"
-        FieldDef("time", 74, 6, is_constant=True),
-        FieldDef("date", 80, 8, is_constant=True), 
+        FieldDef("creation_date", 66, 8, is_constant=False), 
+        FieldDef("creation_time", 74, 6, is_constant=False),
+        FieldDef("transmission_date", 80, 8, is_constant=False), 
         FieldDef("2.200", 103, 5, is_constant=True)
     ]),
     "GRH": RecordDef("GRH", 26, [

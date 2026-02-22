@@ -35,6 +35,7 @@ with st.sidebar:
         ["Generator", "Validator", "System Health"]
     )
     st.markdown("---")
+    cwr_sequence = st.number_input("CWR Sequence Number", min_value=1, max_value=9999, value=1, step=1)
     st.caption(f"Operator: {LUMINA_CONFIG['name']}")
 
 # --- 4. TASK: GENERATOR ---
@@ -84,17 +85,17 @@ if mode == "Generator":
                             for w in warnings:
                                 st.warning(w)
                         
-                        # Generate Filename
-                        # Generate Filename (Dynamic: CW + YY + NNNN + LUM + _ + UniqueId + .V22)
-                        base_name = os.path.splitext(selected_file)[0]
-                        # Extract 3-digit unique ID (e.g. from EPP060_Metadata)
-                        # We try to get digits, defaulting to the last 3 chars of the split 
-                        unique_id = base_name.split('_')[0][-3:]
-                        if not unique_id.isalnum():
-                             unique_id = "000"
-                        
+                        # Generate Filename (CW[YY][NNNN]LUM_[AlbumCode].V22)
+                        album_code = "UNKNOWN"
+                        for col in df.columns:
+                            c_up = str(col).upper()
+                            if "ALBUM: CODE" in c_up or "ALBUM CODE" in c_up or "CATALOG" in c_up:
+                                vals = df[col].dropna().values
+                                if len(vals) > 0:
+                                    album_code = str(vals[0]).strip()
+                                    break
                         yr = datetime.now().strftime("%y")
-                        filename = f"CW{yr}0001LUM_{unique_id}.V22"
+                        filename = f"CW{yr}{int(cwr_sequence):04d}LUM_{album_code}.V22"
                         
                         # --- PRE-FLIGHT CHECKLIST ---
                         st.write("Running Mandatory Pre-Flight Checks...")
@@ -193,14 +194,17 @@ if mode == "Generator":
                             
                             s.update(label="Conversion Complete!", state="complete")
                             
-                            # Generate Filename (Dynamic: CW + YY + NNNN + LUM + _ + UniqueId + .V22)
-                            base_name = os.path.splitext(uploaded_file.name)[0]
-                            unique_id = base_name.split('_')[0][-3:]
-                            if not unique_id.isalnum():
-                                 unique_id = "000"
-                                 
+                            # Generate Filename (CW[YY][NNNN]LUM_[AlbumCode].V22)
+                            album_code = "UNKNOWN"
+                            for col in df.columns:
+                                c_up = str(col).upper()
+                                if "ALBUM: CODE" in c_up or "ALBUM CODE" in c_up or "CATALOG" in c_up:
+                                    vals = df[col].dropna().values
+                                    if len(vals) > 0:
+                                        album_code = str(vals[0]).strip()
+                                        break
                             yr = datetime.now().strftime("%y")
-                            filename = f"CW{yr}0001LUM_{unique_id}.V22"
+                            filename = f"CW{yr}{int(cwr_sequence):04d}LUM_{album_code}.V22"
                             
                             # --- PRE-FLIGHT CHECKLIST ---
                             st.write("Running Mandatory Pre-Flight Checks...")
