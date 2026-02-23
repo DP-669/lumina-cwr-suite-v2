@@ -6,6 +6,7 @@ from datetime import datetime
 import config
 import io
 import zipfile
+import json
 
 try:
     from cwr_engine import generate_cwr_content
@@ -27,7 +28,26 @@ st.set_page_config(page_title="Lumina CWR Suite", layout="wide")
 
 st.title("Lumina CWR Suite")
 
-# --- 3. SIDEBAR NAVIGATION ---
+# --- 3. SEQUENCE VAULT LOGIC ---
+SEQ_FILE = "cwr_sequence_log.json"
+current_year = int(datetime.now().strftime("%y"))
+
+if not os.path.exists(SEQ_FILE):
+    with open(SEQ_FILE, 'w') as f:
+        json.dump({"year": current_year, "last_sequence": 0}, f)
+
+with open(SEQ_FILE, 'r') as f:
+    seq_data = json.load(f)
+
+if current_year > seq_data.get("year", 0):
+    seq_data["year"] = current_year
+    seq_data["last_sequence"] = 0
+    with open(SEQ_FILE, 'w') as f:
+        json.dump(seq_data, f)
+
+next_sequence = seq_data.get("last_sequence", 0) + 1
+
+# --- 4. SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.header("Navigation")
     mode = st.radio(
@@ -35,10 +55,10 @@ with st.sidebar:
         ["Generator", "Validator", "System Health"]
     )
     st.markdown("---")
-    cwr_sequence = st.number_input("CWR Sequence Number", min_value=1, max_value=9999, value=1, step=1)
+    st.metric("CWR Sequence Vault (Next)", f"{next_sequence:04d}")
     st.caption(f"Operator: {LUMINA_CONFIG['name']}")
 
-# --- 4. TASK: GENERATOR ---
+# --- 5. TASK: GENERATOR ---
 if mode == "Generator":
     st.header("CWR Generation (v2.2)")
     st.write("Convert CSV metadata into CWR format.")
@@ -85,17 +105,9 @@ if mode == "Generator":
                             for w in warnings:
                                 st.warning(w)
                         
-                        # Generate Filename (CW[YY][NNNN]LUM_[AlbumCode].V22)
-                        album_code = "UNKNOWN"
-                        for col in df.columns:
-                            c_up = str(col).upper()
-                            if "ALBUM: CODE" in c_up or "ALBUM CODE" in c_up or "CATALOG" in c_up:
-                                vals = df[col].dropna().values
-                                if len(vals) > 0:
-                                    album_code = str(vals[0]).strip()
-                                    break
-                        yr = datetime.now().strftime("%y")
-                        filename = f"CW{yr}{int(cwr_sequence):04d}LUM_{album_code}.V22"
+                        # Generate Strict Filename (CW[YY][NNNN]LUM_319.V22)
+                        yr = str(current_year).zfill(2)
+                        filename = f"CW{yr}{next_sequence:04d}LUM_319.V22"
                         
                         # --- PRE-FLIGHT CHECKLIST ---
                         st.write("Running Mandatory Pre-Flight Checks...")
@@ -161,6 +173,11 @@ if mode == "Generator":
                             file_name=f"{filename}.zip",
                             mime="application/zip"
                         )
+                        
+                        # Increment Sequence Vault on Success
+                        seq_data["last_sequence"] = next_sequence
+                        with open(SEQ_FILE, 'w') as f:
+                            json.dump(seq_data, f)
                 except Exception as e:
                     st.error(f"FATAL ERROR: {e}")
         else:
@@ -196,17 +213,9 @@ if mode == "Generator":
                             
                             s.update(label="Conversion Complete!", state="complete")
                             
-                            # Generate Filename (CW[YY][NNNN]LUM_[AlbumCode].V22)
-                            album_code = "UNKNOWN"
-                            for col in df.columns:
-                                c_up = str(col).upper()
-                                if "ALBUM: CODE" in c_up or "ALBUM CODE" in c_up or "CATALOG" in c_up:
-                                    vals = df[col].dropna().values
-                                    if len(vals) > 0:
-                                        album_code = str(vals[0]).strip()
-                                        break
-                            yr = datetime.now().strftime("%y")
-                            filename = f"CW{yr}{int(cwr_sequence):04d}LUM_{album_code}.V22"
+                            # Generate Strict Filename (CW[YY][NNNN]LUM_319.V22)
+                            yr = str(current_year).zfill(2)
+                            filename = f"CW{yr}{next_sequence:04d}LUM_319.V22"
                             
                             # --- PRE-FLIGHT CHECKLIST ---
                             st.write("Running Mandatory Pre-Flight Checks...")
@@ -246,6 +255,11 @@ if mode == "Generator":
                                 file_name=f"{filename}.zip",
                                 mime="application/zip"
                             )
+                            
+                            # Increment Sequence Vault on Success
+                            seq_data["last_sequence"] = next_sequence
+                            with open(SEQ_FILE, 'w') as f:
+                                json.dump(seq_data, f)
                     except Exception as e:
                         st.error(f"FATAL ERROR: {e}")
 
