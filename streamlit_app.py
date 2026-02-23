@@ -113,8 +113,8 @@ if mode == "Generator":
                             
                         # CHECK 3: SPU lines exactly 166 characters
                         spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
-                        if not all(len(l) == 166 for l in spu_lines):
-                            raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
+                        if not all(len(l) == 182 for l in spu_lines):
+                            raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 182 characters")
                             
                         # CHECK 4: Dual REC records ('C' and 'D')
                         import re
@@ -222,8 +222,8 @@ if mode == "Generator":
                                 
                             # CHECK 3: SPU lines exactly 166 characters
                             spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
-                            if not all(len(l) == 166 for l in spu_lines):
-                                raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
+                            if not all(len(l) == 182 for l in spu_lines):
+                                raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 182 characters")
                                 
                             # CHECK 4: Dual REC records ('C' and 'D')
                             rec_lines = [l for l in cwr_lines if l.startswith("REC")]
