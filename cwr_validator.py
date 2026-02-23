@@ -1,7 +1,7 @@
 import re
 
 class CWRValidator:
-    EXPECTED_SPU_LEN = 166
+    EXPECTED_SPU_LEN = 182
     EXPECTED_REC_LEN = 508
 
     # Independent Clean Room Rule Dictionary
@@ -26,11 +26,11 @@ class CWRValidator:
             ]
         },
         "SPU": {
-            "length": 166,
+            "length": 182,
             "fields": [
                 ("Publisher Sequence", 11, 19, r"^\d{8}$"),
                 ("SR Share & Refusal", 131, 138, r"^\d{5} N$"),
-                ("Agreement Type", 164, 166, r"^PG$")
+                ("Agreement Type", 180, 182, r"^PG$")
             ]
         },
         "SPT": {
