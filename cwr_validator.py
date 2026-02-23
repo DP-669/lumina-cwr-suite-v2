@@ -9,7 +9,8 @@ class CWRValidator:
         "HDR": {
             "length": 108,
             "fields": [
-                ("Version", 103, 108, r"^2\.200$")
+                ("EDI Version", 59, 64, r"^01\.10$"),
+                ("CWR Version", 101, 106, r"^2\.200$")
             ]
         },
         "GRH": {

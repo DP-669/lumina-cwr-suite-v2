@@ -23,11 +23,11 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("01", 3, 2, is_constant=True),
         FieldDef("sender_ipi_short", 5, 9, data_type="numeric", pad_char="0"),
         FieldDef("sender_name", 14, 45, data_type="alphanumeric", pad_char=" "),
-        FieldDef("01.10", 61, 5, is_constant=True),
-        FieldDef("creation_date", 66, 8, is_constant=False), 
-        FieldDef("creation_time", 74, 6, is_constant=False),
-        FieldDef("transmission_date", 80, 8, is_constant=False), 
-        FieldDef("2.200", 103, 5, is_constant=True)
+        FieldDef("01.10", 59, 5, is_constant=True),
+        FieldDef("creation_date", 64, 8, is_constant=False), 
+        FieldDef("creation_time", 72, 6, is_constant=False),
+        FieldDef("transmission_date", 78, 8, is_constant=False), 
+        FieldDef("2.200", 101, 5, is_constant=True)
     ]),
     "GRH": RecordDef("GRH", 26, [
         FieldDef("GRH", 0, 3, is_constant=True),
