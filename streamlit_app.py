@@ -151,11 +151,13 @@ if mode == "Generator":
                         st.success(f"Success! File synced to OUTPUT_V22: {filename}")
                         
                         # Download Fallback
-                        buf = io.BytesIO()
-                        with zipfile.ZipFile(buf, "w") as zf: zf.writestr(filename, cwr)
+                        zip_buffer = io.BytesIO()
+                        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+                            zip_file.writestr(filename, cwr)
+
                         st.download_button(
-                            label="Download ZIP (Safe Mode)",
-                            data=buf.getvalue(),
+                            label="Download CWR Archive (ZIP)",
+                            data=zip_buffer.getvalue(),
                             file_name=f"{filename}.zip",
                             mime="application/zip"
                         )
@@ -233,7 +235,17 @@ if mode == "Generator":
                                 raise ValueError("PRE-FLIGHT FAIL: Works are missing Dual REC records (Source C and D mismatch)")
                                 
                             st.success("CWR 2.2 File Ready")
-                            st.download_button("Download .V22", data=cwr, file_name=filename)
+                            
+                            zip_buffer = io.BytesIO()
+                            with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+                                zip_file.writestr(filename, cwr)
+
+                            st.download_button(
+                                label="Download CWR Archive (ZIP)",
+                                data=zip_buffer.getvalue(),
+                                file_name=f"{filename}.zip",
+                                mime="application/zip"
+                            )
                     except Exception as e:
                         st.error(f"FATAL ERROR: {e}")
 
