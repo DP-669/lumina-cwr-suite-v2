@@ -30,22 +30,23 @@ st.title("Lumina CWR Suite")
 
 # --- 3. SEQUENCE VAULT LOGIC ---
 SEQ_FILE = "cwr_sequence_log.json"
-current_year = int(datetime.now().strftime("%y"))
+current_year = datetime.now().year
 
 if not os.path.exists(SEQ_FILE):
     with open(SEQ_FILE, 'w') as f:
-        json.dump({"year": current_year, "last_sequence": 0}, f)
+        json.dump({"year": current_year, "history": []}, f)
 
 with open(SEQ_FILE, 'r') as f:
     seq_data = json.load(f)
 
 if current_year > seq_data.get("year", 0):
     seq_data["year"] = current_year
-    seq_data["last_sequence"] = 0
+    seq_data["history"] = []
     with open(SEQ_FILE, 'w') as f:
         json.dump(seq_data, f)
 
-next_sequence = seq_data.get("last_sequence", 0) + 1
+history = seq_data.get("history", [])
+next_sequence = max([item["sequence"] for item in history] + [0]) + 1
 
 # --- 4. SIDEBAR NAVIGATION ---
 with st.sidebar:
@@ -55,7 +56,55 @@ with st.sidebar:
         ["Generator", "Validator", "System Health"]
     )
     st.markdown("---")
-    st.metric("CWR Sequence Vault (Next)", f"{next_sequence:04d}")
+    
+    # Part A: The Ledger
+    st.subheader("Accepted Ledger")
+    if history:
+        for item in history:
+            st.markdown(f"- {item['label']}")
+    else:
+        st.markdown("- *No accepted records yet*")
+        
+    st.markdown("---")
+    
+    # Part B: The Generator Input
+    cwr_sequence = st.number_input("Next Sequence to Generate", min_value=1, max_value=9999, value=int(next_sequence), step=1)
+    
+    # Part C: The 'Close the Loop' Logger
+    with st.expander("Log Accepted Registration"):
+        uploaded_v22 = st.file_uploader("Upload accepted .V22", type=["V22", "cwr"], key="logger_uploader")
+        if uploaded_v22:
+            filename_up = uploaded_v22.name
+            try:
+                seq_str = filename_up[4:8]
+                extracted_seq = int(seq_str)
+            except ValueError:
+                extracted_seq = 0
+                
+            content = uploaded_v22.getvalue().decode("latin-1")
+            lines = content.replace('\r\n', '\n').split('\n')
+            library_name = "UNKNOWN"
+            album_code = "UNKNOWN"
+            for line in lines:
+                if line.startswith("ORN") and len(line) >= 96:
+                    library_name = line[22:82].strip()
+                    album_code = line[82:96].strip()
+                    break
+            
+            new_label = f"{extracted_seq:04d} {album_code} {library_name}".strip()
+            st.write(f"Detected: **{new_label}**")
+            
+            if st.button("Mark as Officially Accepted"):
+                if not any(item["sequence"] == extracted_seq for item in history):
+                    seq_data["history"].append({"sequence": extracted_seq, "label": new_label})
+                    with open(SEQ_FILE, 'w') as f:
+                        json.dump(seq_data, f)
+                    st.success("Logged successfully!")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.warning("Sequence already logged.")
+                    
     st.caption(f"Operator: {LUMINA_CONFIG['name']}")
 
 # --- 5. TASK: GENERATOR ---
@@ -106,8 +155,8 @@ if mode == "Generator":
                                 st.warning(w)
                         
                         # Generate Strict Filename (CW[YY][NNNN]LUM_319.V22)
-                        yr = str(current_year).zfill(2)
-                        filename = f"CW{yr}{next_sequence:04d}LUM_319.V22"
+                        yr = str(current_year)[-2:]
+                        filename = f"CW{yr}{int(cwr_sequence):04d}LUM_319.V22"
                         
                         # --- PRE-FLIGHT CHECKLIST ---
                         st.write("Running Mandatory Pre-Flight Checks...")
@@ -173,11 +222,6 @@ if mode == "Generator":
                             file_name=f"{filename}.zip",
                             mime="application/zip"
                         )
-                        
-                        # Increment Sequence Vault on Success
-                        seq_data["last_sequence"] = next_sequence
-                        with open(SEQ_FILE, 'w') as f:
-                            json.dump(seq_data, f)
                 except Exception as e:
                     st.error(f"FATAL ERROR: {e}")
         else:
@@ -214,8 +258,8 @@ if mode == "Generator":
                             s.update(label="Conversion Complete!", state="complete")
                             
                             # Generate Strict Filename (CW[YY][NNNN]LUM_319.V22)
-                            yr = str(current_year).zfill(2)
-                            filename = f"CW{yr}{next_sequence:04d}LUM_319.V22"
+                            yr = str(current_year)[-2:]
+                            filename = f"CW{yr}{int(cwr_sequence):04d}LUM_319.V22"
                             
                             # --- PRE-FLIGHT CHECKLIST ---
                             st.write("Running Mandatory Pre-Flight Checks...")
@@ -255,11 +299,6 @@ if mode == "Generator":
                                 file_name=f"{filename}.zip",
                                 mime="application/zip"
                             )
-                            
-                            # Increment Sequence Vault on Success
-                            seq_data["last_sequence"] = next_sequence
-                            with open(SEQ_FILE, 'w') as f:
-                                json.dump(seq_data, f)
                     except Exception as e:
                         st.error(f"FATAL ERROR: {e}")
 
