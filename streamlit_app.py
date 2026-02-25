@@ -368,10 +368,11 @@ elif mode == "Validator":
         content = v22_file.getvalue().decode("latin-1")
         if st.button("Run Inspection"):
             rep, stats = CWRValidator().process_file(content)
-            st.metric("Transactions", stats["transactions"])
-            if not rep and stats["transactions"] > 0: 
+            transaction_count = len([l for l in content.splitlines() if l.startswith('NWR')])
+            st.metric("Transactions", transaction_count)
+            if not rep and transaction_count > 0: 
                 st.success("Syntax Valid.")
-            elif stats["transactions"] == 0:
+            elif transaction_count == 0:
                 st.warning("No transactions found.")
             else: 
                 col_err, col_list = st.columns([1, 2])
@@ -386,8 +387,6 @@ elif mode == "Validator":
                         st.markdown("### 🔴 Critical Errors (Must Fix)")
                         for item in criticals:
                             st.error(f"**Line {item['line']}**: {item['message']}")
-                            with st.expander("View Content"):
-                                st.code(item['content'])
                     
                     if warnings:
                         st.markdown("### 🟡 Warnings (Review)")
