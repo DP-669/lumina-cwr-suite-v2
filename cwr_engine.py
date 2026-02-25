@@ -46,7 +46,8 @@ class FormatterEngine:
         
         # 3. Enforce Engine Assertion and Global Rule
         final_string = "".join(canvas)
-        final_string = final_string.ljust(record_def.length, ' ')[:record_def.length]
+        mandatory_length = record_def.length
+        final_string = final_string.ljust(mandatory_length, ' ')[:mandatory_length]
         
         prefix_slice = final_string[:19]
         if len(prefix_slice.strip()) > 0 and not re.match(r'^[A-Z]{3}\d{16}$', prefix_slice.replace(" ", "0") if "HDR" not in record_type and "GRH" not in record_type else "XXX0000000000000000"):

@@ -193,10 +193,14 @@ if mode == "Generator":
                         if "LUM" not in hdr_line or "2.200" not in hdr_line:
                             raise ValueError("PRE-FLIGHT FAIL: HDR record does not contain Submitter LUM and/or Version 2.200")
                             
-                        # CHECK 3: SPU lines exactly 166 characters
+                        # CHECK 3: SPU lines exactly 166 characters and SWR exactly 182
                         spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
-                        if not all(len(l) == 182 for l in spu_lines):
-                            raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 182 characters")
+                        if not all(len(l) == 166 for l in spu_lines):
+                            raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
+                            
+                        swr_lines = [l for l in cwr_lines if l.startswith("SWR")]
+                        if not all(len(l) == 182 for l in swr_lines):
+                            raise ValueError("PRE-FLIGHT FAIL: Not all SWR records are exactly 182 characters")
                             
                         # CHECK 4: Dual REC records ('C' and 'D')
                         import re
@@ -318,10 +322,14 @@ if mode == "Generator":
                             if "LUM" not in hdr_line or "2.200" not in hdr_line:
                                 raise ValueError("PRE-FLIGHT FAIL: HDR record does not contain Submitter LUM and/or Version 2.200")
                                 
-                            # CHECK 3: SPU lines exactly 166 characters
+                            # CHECK 3: SPU lines exactly 166 characters and SWR exactly 182
                             spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
-                            if not all(len(l) == 182 for l in spu_lines):
-                                raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 182 characters")
+                            if not all(len(l) == 166 for l in spu_lines):
+                                raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
+                                
+                            swr_lines = [l for l in cwr_lines if l.startswith("SWR")]
+                            if not all(len(l) == 182 for l in swr_lines):
+                                raise ValueError("PRE-FLIGHT FAIL: Not all SWR records are exactly 182 characters")
                                 
                             # CHECK 4: Dual REC records ('C' and 'D')
                             rec_lines = [l for l in cwr_lines if l.startswith("REC")]
