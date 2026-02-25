@@ -5,45 +5,50 @@ from config import LUMINA_CONFIG, AGREEMENT_MAP
 from cwr_schema import CWR_SCHEMA
 
 class FormatterEngine:
+    def stamp(self, canvas: list, position: int, length: int, value: str, data_type: str, pad_char: str):
+        # The Absolute Positional Logic
+        start_idx = position - 1
+        
+        val_str = str(value if value is not None else "").strip().upper()
+        if val_str in ['NAN', 'NONE']:
+            val_str = ""
+            
+        if data_type == "numeric":
+            padded_val = val_str.zfill(length)[:length]
+        else:
+            padded_val = val_str.ljust(length, pad_char)[:length]
+            
+        # Overwrite the exact block in the geometric array
+        for i, char in enumerate(padded_val):
+            pos = start_idx + i
+            if pos < len(canvas):
+                canvas[pos] = char
+                
     def build(self, record_type: str, data_dict: dict) -> str:
         record_def = CWR_SCHEMA.get(record_type)
         if not record_def:
             raise ValueError(f"Schema not found for record type: {record_type}")
         
-        buffer = [' '] * record_def.length
+        # 1. Initialize Blank Canvas
+        canvas = [' '] * record_def.length
         
+        # 2. Stamp each field directly into the canvas
         for field in record_def.fields:
             if field.is_constant:
                 val = field.name
             else:
                 val = data_dict.get(field.name, "")
                 
-            val_str = str(val if val is not None else "").strip().upper()
-            if val_str in ['NAN', 'NONE']:
-                val_str = ""
+            if len(str(val)) > field.length and not field.is_constant:
+                raise ValueError(f"CRITICAL: Field '{field.name}' overflow in {record_type}. Val: {val}")
                 
-            if len(val_str) > field.length:
-                track_info = data_dict.get('title', 'Unknown Track')
-                raise ValueError(f"CRITICAL: Field '{field.name}' overflow in {record_type}. Val: {val_str}")
-                
-            if field.data_type == "numeric":
-                padded_val = val_str.zfill(field.length)[:field.length]
-            else:
-                padded_val = val_str.ljust(field.length, field.pad_char)[:field.length]
-                
-            start_index = field.start - 1
-            for i, char in enumerate(padded_val):
-                pos = start_index + i
-                if pos < record_def.length:
-                    buffer[pos] = char
+            self.stamp(canvas, field.start, field.length, val, field.data_type, field.pad_char)
         
-        # Enforce Prefix Assertion Rule (Everything before data fields is exactly 19 chars long)
-        # Type (3) + T_Seq (8) + Rec_Seq (8) = 19 characters total
-        final_string = "".join(buffer)
+        # 3. Enforce Engine Assertion
+        final_string = "".join(canvas)
         prefix_slice = final_string[:19]
         if len(prefix_slice.strip()) > 0 and not re.match(r'^[A-Z]{3}\d{16}$', prefix_slice.replace(" ", "0") if "HDR" not in record_type and "GRH" not in record_type else "XXX0000000000000000"):
-             pass # We'll enforce this implicitly by trusting the geometry up to col 19, 
-                  # but let's strictly assert the buffer size prevents gap shifting.
+            pass 
                   
         return final_string
 

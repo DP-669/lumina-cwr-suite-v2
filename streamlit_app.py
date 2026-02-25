@@ -152,13 +152,19 @@ if mode == "Generator":
                             # Work Title (60 chars)
                             title_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]) > 0 else '').strip()
                             if len(title_val) > 60:
-                                st.error("CRITICAL: Change the Work Title, it is too long (or short), you only have 60 slots for it.")
+                                st.error(f"CRITICAL: Change the Work Title ('{title_val}'). It exceeds 60 characters.")
                                 st.stop()
                                 
-                            # ISRC (12 chars strictly, assuming if exists)
+                            # ISRC (12 chars strictly)
                             isrc = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]) > 0 else '').strip()
                             if isrc and len(isrc) != 12:
-                                st.error("CRITICAL: Change the ISRC, it is too long (or short), you only have 12 slots for it.")
+                                st.error(f"CRITICAL: Change the ISRC ('{isrc}'). It must be exactly 12 characters.")
+                                st.stop()
+                                
+                            # Label / Library (60 chars)
+                            label_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['LIBRARY NAME', 'LABEL', 'LIBRARY: NAME']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['LIBRARY NAME', 'LABEL', 'LIBRARY: NAME']]) > 0 else '').strip()
+                            if len(label_val) > 60:
+                                st.error(f"CRITICAL: Change the Label Name ('{label_val}'). It exceeds 60 characters.")
                                 st.stop()
 
                         st.write("Generating HDR/GRH/NWR Records...")
@@ -268,13 +274,19 @@ if mode == "Generator":
                                 # Work Title (60 chars)
                                 title_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]) > 0 else '').strip()
                                 if len(title_val) > 60:
-                                    st.error("CRITICAL: Change the Work Title, it is too long (or short), you only have 60 slots for it.")
+                                    st.error(f"CRITICAL: Change the Work Title ('{title_val}'). It exceeds 60 characters.")
                                     st.stop()
                                     
-                                # ISRC (12 chars strictly, assuming if exists)
+                                # ISRC (12 chars strictly)
                                 isrc = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]) > 0 else '').strip()
                                 if isrc and len(isrc) != 12:
-                                    st.error("CRITICAL: Change the ISRC, it is too long (or short), you only have 12 slots for it.")
+                                    st.error(f"CRITICAL: Change the ISRC ('{isrc}'). It must be exactly 12 characters.")
+                                    st.stop()
+                                    
+                                # Label / Library (60 chars)
+                                label_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['LIBRARY NAME', 'LABEL', 'LIBRARY: NAME']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['LIBRARY NAME', 'LABEL', 'LIBRARY: NAME']]) > 0 else '').strip()
+                                if len(label_val) > 60:
+                                    st.error(f"CRITICAL: Change the Label Name ('{label_val}'). It exceeds 60 characters.")
                                     st.stop()
 
                             st.write("Aligning Record Positions...")
