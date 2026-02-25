@@ -193,14 +193,12 @@ if mode == "Generator":
                         if "LUM" not in hdr_line or "2.200" not in hdr_line:
                             raise ValueError("PRE-FLIGHT FAIL: HDR record does not contain Submitter LUM and/or Version 2.200")
                             
-                        # CHECK 3: SPU lines exactly 166 characters and SWR exactly 182
-                        spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
-                        if not all(len(l) == 166 for l in spu_lines):
-                            raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
-                            
-                        swr_lines = [l for l in cwr_lines if l.startswith("SWR")]
-                        if not all(len(l) == 182 for l in swr_lines):
-                            raise ValueError("PRE-FLIGHT FAIL: Not all SWR records are exactly 182 characters")
+                        # CHECK 3: Symmetry Group exactly 182 characters
+                        for l in cwr_lines:
+                            rec_type = l[:3]
+                            if rec_type in ["NWR", "SWR", "SWT", "SPU", "SPT", "REV"]:
+                                if len(l) != 182:
+                                    raise ValueError(f"PRE-FLIGHT FAIL: {rec_type} record length must be exactly 182 characters. Found: {len(l)}")
                             
                         # CHECK 4: Dual REC records ('C' and 'D')
                         import re
@@ -322,14 +320,12 @@ if mode == "Generator":
                             if "LUM" not in hdr_line or "2.200" not in hdr_line:
                                 raise ValueError("PRE-FLIGHT FAIL: HDR record does not contain Submitter LUM and/or Version 2.200")
                                 
-                            # CHECK 3: SPU lines exactly 166 characters and SWR exactly 182
-                            spu_lines = [l for l in cwr_lines if l.startswith("SPU")]
-                            if not all(len(l) == 166 for l in spu_lines):
-                                raise ValueError("PRE-FLIGHT FAIL: Not all SPU records are exactly 166 characters")
-                                
-                            swr_lines = [l for l in cwr_lines if l.startswith("SWR")]
-                            if not all(len(l) == 182 for l in swr_lines):
-                                raise ValueError("PRE-FLIGHT FAIL: Not all SWR records are exactly 182 characters")
+                            # CHECK 3: Symmetry Group exactly 182 characters
+                            for l in cwr_lines:
+                                rec_type = l[:3]
+                                if rec_type in ["NWR", "SWR", "SWT", "SPU", "SPT", "REV"]:
+                                    if len(l) != 182:
+                                        raise ValueError(f"PRE-FLIGHT FAIL: {rec_type} record length must be exactly 182 characters. Found: {len(l)}")
                                 
                             # CHECK 4: Dual REC records ('C' and 'D')
                             rec_lines = [l for l in cwr_lines if l.startswith("REC")]

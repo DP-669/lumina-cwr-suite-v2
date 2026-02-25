@@ -49,7 +49,7 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("Y", 136, 1, is_constant=True),
         FieldDef("ORI", 143, 3, is_constant=True)
     ]),
-    "SPU": RecordDef("SPU", 166, [
+    "SPU": RecordDef("SPU", 182, [
         FieldDef("SPU", 1, 3, is_constant=True),
         FieldDef("t_seq", 4, 8, data_type="numeric"),
         FieldDef("rec_seq", 12, 8, data_type="numeric"),
@@ -64,11 +64,9 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("mr_share", 124, 5, data_type="numeric"),
         FieldDef("sr_soc", 129, 3, data_type="alphanumeric"),
         FieldDef("sr_share", 132, 5, data_type="numeric"),
-        FieldDef("N", 138, 1, is_constant=True),
-        FieldDef("agreement", 167, 14, data_type="alphanumeric"),
-        FieldDef("PG", 181, 2, is_constant=True)
+        FieldDef("N", 138, 1, is_constant=True)
     ]),
-    "SPT": RecordDef("SPT", 166, [
+    "SPT": RecordDef("SPT", 182, [
         FieldDef("SPT", 1, 3, is_constant=True),
         FieldDef("t_seq", 4, 8, data_type="numeric"),
         FieldDef("rec_seq", 12, 8, data_type="numeric"),
