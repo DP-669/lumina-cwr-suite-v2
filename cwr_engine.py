@@ -33,11 +33,13 @@ class FormatterEngine:
                     f"(Length: {len(val_str)}). Automation halted."
                 )
                 
-            # Apply padding based on data_type
+            # The Steel Walls (Force Padding and Truncation)
+            # Crucial: Ensures short strings are padded up to their full limit, 
+            # preventing the next field from shifting left.
             if field.data_type == "numeric":
-                padded_val = val_str.rjust(field.length, field.pad_char)
+                padded_val = val_str.zfill(field.length)[:field.length]
             else:
-                padded_val = val_str.ljust(field.length, field.pad_char)
+                padded_val = val_str.ljust(field.length, field.pad_char)[:field.length]
                 
             # Place into buffer at exact absolute position
             for i, char in enumerate(padded_val):

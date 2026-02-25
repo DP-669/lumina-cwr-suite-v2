@@ -144,9 +144,24 @@ if mode == "Generator":
                             st.error("Schema not recognized.")
                             st.stop()
 
-                        st.write("Generating HDR/GRH/NWR Records...")
+                        st.write("Running Pre-Flight Data Gatekeeper...")
                         df = pd.read_csv(csv_path, header=h_idx)
                         
+                        # Apply Gatekeeper Checks
+                        for i, row in df.iterrows():
+                            # Work Title (60 chars)
+                            title_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]) > 0 else '').strip()
+                            if len(title_val) > 60:
+                                st.error("CRITICAL: Change the Work Title, it is too long (or short), you only have 60 slots for it.")
+                                st.stop()
+                                
+                            # ISRC (12 chars strictly, assuming if exists)
+                            isrc = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]) > 0 else '').strip()
+                            if isrc and len(isrc) != 12:
+                                st.error("CRITICAL: Change the ISRC, it is too long (or short), you only have 12 slots for it.")
+                                st.stop()
+
+                        st.write("Generating HDR/GRH/NWR Records...")
                         # Generate CWR with Map & Warnings
                         cwr, warnings = generate_cwr_content(df, agreement_map=AGREEMENT_MAP)
                         
@@ -244,9 +259,25 @@ if mode == "Generator":
                                 st.error("Schema not recognized.")
                                 st.stop()
 
-                            st.write("Aligning Record Positions...")
+                            st.write("Running Pre-Flight Data Gatekeeper...")
                             uploaded_file.seek(0)
                             df = pd.read_csv(uploaded_file, header=h_idx)
+                            
+                            # Apply Gatekeeper Checks
+                            for i, row in df.iterrows():
+                                # Work Title (60 chars)
+                                title_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['TRACK: TITLE', 'TITLE', 'TRACK TITLE']]) > 0 else '').strip()
+                                if len(title_val) > 60:
+                                    st.error("CRITICAL: Change the Work Title, it is too long (or short), you only have 60 slots for it.")
+                                    st.stop()
+                                    
+                                # ISRC (12 chars strictly, assuming if exists)
+                                isrc = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]) > 0 else '').strip()
+                                if isrc and len(isrc) != 12:
+                                    st.error("CRITICAL: Change the ISRC, it is too long (or short), you only have 12 slots for it.")
+                                    st.stop()
+
+                            st.write("Aligning Record Positions...")
                             
                             # Generate CWR with Map & Warnings
                             cwr, warnings = generate_cwr_content(df, agreement_map=AGREEMENT_MAP)
