@@ -123,9 +123,10 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("REC", 1, 3, is_constant=True),
         FieldDef("t_seq", 4, 8, data_type="numeric"),
         FieldDef("rec_seq", 12, 8, data_type="numeric"),
-        FieldDef("cd_id", 219, 14, data_type="alphanumeric"),
+        FieldDef("cd_id", 219, 15, data_type="alphanumeric"),
         FieldDef("isrc", 250, 12, data_type="alphanumeric"),
         FieldDef("source", 263, 1, data_type="alphanumeric"),
+        FieldDef("U", 284, 1, is_constant=True), # Validity flag set to U (will be Y shortly based on prompt)
         FieldDef("label", 446, 60, data_type="alphanumeric"),
         FieldDef("Y", 507, 1, is_constant=True)
     ]),
@@ -135,9 +136,9 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("rec_seq", 12, 8, data_type="numeric"),
         FieldDef("LIB", 20, 3, is_constant=True),
         FieldDef("library", 23, 60, data_type="alphanumeric"),
-        FieldDef("cd_id", 83, 14, data_type="alphanumeric"),
-        FieldDef("cut_number", 97, 4, data_type="numeric"),
-        FieldDef("label", 101, 60, data_type="alphanumeric")
+        FieldDef("cd_id", 83, 15, data_type="alphanumeric"),
+        FieldDef("cut_number", 98, 4, data_type="numeric"), # Moved start pos by 1 to accommodate 15 char cd_id
+        FieldDef("label", 102, 60, data_type="alphanumeric") # Moved start pos by 1
     ]),
     "GRT": RecordDef("GRT", 24, [
         FieldDef("GRT", 1, 3, is_constant=True),
