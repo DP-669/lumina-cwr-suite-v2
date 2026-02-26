@@ -95,23 +95,63 @@ st.markdown("""
         text-align: center;
     }
     
-    /* Center Streamlit Tabs */
+    /* Center Streamlit Tabs Container */
     div[data-testid="stTabs"] > div[role="tablist"] {
         justify-content: center;
+        gap: 1.5rem;
     }
     
+    /* Custom Styling for the Tabs */
+    button[data-baseweb="tab"] {
+        width: 200px !important;
+        height: 60px !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        transition: transform 0.2s ease !important;
+        margin: 0 !important;
+    }
+    button[data-baseweb="tab"]:hover {
+        transform: scale(1.05) !important;
+    }
+    button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        color: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Tab 1: Generate (Vibrant Orange) */
+    button[data-baseweb="tab"]:nth-of-type(1) {
+        background-color: #FF9500 !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3) !important;
+    }
+    
+    /* Tab 2: Validate (Lush Green) */
+    button[data-baseweb="tab"]:nth-of-type(2) {
+        background-color: #34C759 !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3) !important;
+    }
+    
+    /* Hide the annoying bottom border line from Streamlit Tabs */
+    div[data-testid="stTabs"] > div[role="tablist"] > div {
+        display: none !important;
+    }
+
     /* Hide the top header bar and generic Streamlit menu */
     header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# Top Right Logo Space
-col_logo_spacer, col_logo = st.columns([8, 2])
-with col_logo:
-    if os.path.exists("lumina_logo.png"):
-        st.image("lumina_logo.png", width=120)
-    else:
-        st.markdown("<p style='text-align: right; color: #8C8C8C; font-size: 0.8rem; font-weight: 600;'>LUMINA PUBLISHING LTD.</p>", unsafe_allow_html=True)
+# Centered Logo and Title Spacer
+st.markdown("<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: -1rem;'>", unsafe_allow_html=True)
+if os.path.exists("lumina_logo.png"):
+    st.image("lumina_logo.png", width=240)
+st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<h1 class='main-title'>Lumina CWR Suite</h1>", unsafe_allow_html=True)
 
