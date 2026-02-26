@@ -23,10 +23,89 @@ else:
     LUMINA_CONFIG = config.LUMINA_CONFIG
     AGREEMENT_MAP = config.AGREEMENT_MAP
 
-# --- 2. DEFAULT UI SETUP ---
-st.set_page_config(page_title="Lumina CWR Suite", layout="wide")
+# --- 2. DEFAULT UI SETUP & CSS ---
+st.set_page_config(page_title="Lumina CWR Suite", layout="centered", initial_sidebar_state="collapsed")
 
-st.title("Lumina CWR Suite")
+# Apple-Centric Custom Styling
+st.markdown("""
+<style>
+    /* Global Background and Fonts */
+    .stApp {
+        background-color: #FAFAFA;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* Center the Main Title */
+    .main-title {
+        text-align: center;
+        font-weight: 700;
+        font-size: 3rem;
+        color: #1A1A1A;
+        margin-bottom: 0px;
+        padding-top: 2rem;
+    }
+    
+    /* Subheaders and Validators */
+    .sub-title {
+        text-align: center;
+        font-weight: 500;
+        font-size: 1.5rem;
+        color: #8C8C8C; /* 65% Gray */
+        margin-top: -10px;
+        margin-bottom: 30px;
+    }
+    
+    /* Tame the File Uploader */
+    .stFileUploader {
+        margin: 0 auto;
+        max-width: 400px;
+    }
+    
+    /* Colorize the Upload Cloud Icon (Streamlit internal classes) */
+    .st-emotion-cache-1gula1e {
+        color: #FF9500 !important; /* Apple Orange */
+    }
+
+    /* Style the 'Run Inspection' button to pop and pulse */
+    .run-btn-container button {
+        background-color: #007AFF !important; /* Apple Blue */
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        border: none !important;
+        padding: 10px 24px !important;
+        margin: 0 auto !important;
+        display: block !important;
+        animation: pulse 2s infinite;
+        transition: transform 0.2s ease;
+    }
+    .run-btn-container button:hover {
+        transform: scale(1.05);
+        background-color: #005BB5 !important;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 122, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0); }
+    }
+    
+    /* Centered Metrics */
+    div[data-testid="metric-container"] {
+        text-align: center;
+    }
+    
+    /* Hide the top header bar and generic Streamlit menu */
+    header {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
+
+# Top Right Logo Space (Placeholder, assume absolute positioning or columns)
+col_logo_spacer, col_logo = st.columns([8, 2])
+with col_logo:
+    st.markdown("<p style='text-align: right; color: #8C8C8C; font-size: 0.8rem; font-weight: 600;'>LUMINA PUBLISHING LTD.</p>", unsafe_allow_html=True)
+
+st.markdown("<h1 class='main-title'>Lumina CWR Suite</h1>", unsafe_allow_html=True)
 
 # --- 3. SEQUENCE VAULT LOGIC ---
 SEQ_FILE = "cwr_sequence_log.json"
@@ -48,69 +127,13 @@ if current_year > seq_data.get("year", 0):
 history = seq_data.get("history", [])
 next_sequence = max([item["sequence"] for item in history] + [0]) + 1
 
-# --- 4. SIDEBAR NAVIGATION ---
-with st.sidebar:
-    st.header("Navigation")
-    mode = st.radio(
-        "Select Operation:",
-        ["Generator", "Validator", "System Health"]
-    )
-    st.markdown("---")
-    
-    # Part A: The Ledger
-    st.subheader("Accepted Ledger")
-    if history:
-        for item in history:
-            st.markdown(f"- {item['label']}")
-    else:
-        st.markdown("- *No accepted records yet*")
-        
-    st.markdown("---")
-    
-    # Part B: The Generator Input
-    cwr_sequence = st.number_input("Next Sequence to Generate", min_value=1, max_value=9999, value=int(next_sequence), step=1)
-    
-    # Part C: The 'Close the Loop' Logger
-    with st.expander("Log Accepted Registration"):
-        uploaded_v22 = st.file_uploader("Upload accepted .V22", type=["V22", "cwr"], key="logger_uploader")
-        if uploaded_v22:
-            filename_up = uploaded_v22.name
-            try:
-                seq_str = filename_up[4:8]
-                extracted_seq = int(seq_str)
-            except ValueError:
-                extracted_seq = 0
-                
-            content = uploaded_v22.getvalue().decode("latin-1")
-            lines = content.replace('\r\n', '\n').split('\n')
-            library_name = "UNKNOWN"
-            album_code = "UNKNOWN"
-            for line in lines:
-                if line.startswith("ORN") and len(line) >= 96:
-                    library_name = line[22:82].strip()
-                    album_code = line[82:96].strip()
-                    break
-            
-            new_label = f"{extracted_seq:04d} {album_code} {library_name}".strip()
-            st.write(f"Detected: **{new_label}**")
-            
-            if st.button("Mark as Officially Accepted"):
-                if not any(item["sequence"] == extracted_seq for item in history):
-                    seq_data["history"].append({"sequence": extracted_seq, "label": new_label})
-                    with open(SEQ_FILE, 'w') as f:
-                        json.dump(seq_data, f)
-                    st.success("Logged successfully!")
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.warning("Sequence already logged.")
-                    
-    st.caption(f"Operator: {LUMINA_CONFIG['name']}")
+# --- 4. NAVIGATION TABS ---
+st.write("") # Spacer
+tab_gen, tab_val, tab_health = st.tabs(["⚡ Generator", "🛡️ Validator", "⚙️ System Health"])
 
 # --- 5. TASK: GENERATOR ---
-if mode == "Generator":
-    st.header("CWR Generation (v2.2)")
-    st.write("Convert CSV metadata into CWR format.")
+with tab_gen:
+    st.markdown("<h2 class='sub-title'>CWR 2.2 Generator</h2>", unsafe_allow_html=True)
     
     col1, col2 = st.columns([2, 1])
 
@@ -359,27 +382,38 @@ if mode == "Generator":
         *Note: V2.20 logic is strictly enforced.*
         """)
 
-# --- 5. TASK: VALIDATOR ---
-elif mode == "Validator":
-    st.header("CWR Validator")
-    st.write("Check file alignment and record syntax.")
-    v22_file = st.file_uploader("Upload .V22 file", type=["V22", "cwr"])
-    if v22_file:
-        content = v22_file.getvalue().decode("latin-1")
-        if st.button("Run Inspection"):
-            rep, stats = CWRValidator().process_file(content)
-            transaction_count = len([l for l in content.splitlines() if l.startswith('NWR')])
-            st.metric("Transactions", transaction_count)
-            if not rep and transaction_count > 0: 
-                st.success("Syntax Valid.")
-            elif transaction_count == 0:
-                st.warning("No transactions found.")
-            else: 
-                col_err, col_list = st.columns([1, 2])
-                with col_err: 
+# --- 6. TASK: VALIDATOR ---
+with tab_val:
+    st.markdown("<h2 class='sub-title'>CWR 2.2 Validator</h2>", unsafe_allow_html=True)
+    
+    # Center the file uploader in a smaller column
+    col_v_space1, col_v_main, col_v_space2 = st.columns([1, 2, 1])
+    
+    with col_v_main:
+        v22_file = st.file_uploader("Upload .V22 file", type=["V22", "cwr"], label_visibility="collapsed")
+        
+        if v22_file:
+            content = v22_file.getvalue().decode("latin-1")
+            st.markdown("<div class='run-btn-container'>", unsafe_allow_html=True)
+            run_inspection = st.button("Run Inspection", use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            if run_inspection:
+                rep, stats = CWRValidator().process_file(content)
+                transaction_count = len([l for l in content.splitlines() if l.startswith('NWR')])
+                
+                st.write("---")
+                
+                # Center Metrics & Display
+                st.metric("Transactions", transaction_count)
+                
+                if not rep and transaction_count > 0: 
+                    st.success("Syntax Valid.")
+                elif transaction_count == 0:
+                    st.warning("No transactions found.")
+                else: 
                     st.error(f"Found {len(rep)} issues.")
-                with col_list:
-                    # Group findings by type for cleaner report
+                    
                     criticals = [i for i in rep if i['level'] in ['CRITICAL', 'ERROR']]
                     warnings = [i for i in rep if i['level'] == 'WARNING']
                     
@@ -396,7 +430,54 @@ elif mode == "Validator":
                     if not criticals and not warnings:
                         st.success("File is fully compliant!")
 
-elif mode == "System Health":
-    st.header("System Integrity")
+# --- 7. TASK: SYSTEM HEALTH ---
+with tab_health:
+    st.markdown("<h2 class='sub-title'>System Integrity</h2>", unsafe_allow_html=True)
     st.write(f"**Connected to Google Drive:** {'YES' if os.path.exists(config.LOCAL_DRIVE_PATH) else 'NO'}")
     st.write(f"**Vault Status:** {'SECURE CLOUD' if 'LUMINA_CONFIG' in st.secrets else 'LOCAL CONFIG'}")
+    
+    st.markdown("---")
+    st.subheader("Accepted Ledger (Sequence History)")
+    if history:
+        for item in history:
+            st.markdown(f"- {item['label']}")
+    else:
+        st.markdown("- *No accepted records yet*")
+        
+    st.markdown("---")
+    cwr_sequence = st.number_input("Next Sequence Override", min_value=1, max_value=9999, value=int(next_sequence), step=1)
+    
+    with st.expander("Log Accepted Registration manually"):
+        uploaded_v22 = st.file_uploader("Upload accepted .V22", type=["V22", "cwr"], key="logger_uploader")
+        if uploaded_v22:
+            filename_up = uploaded_v22.name
+            try:
+                seq_str = filename_up[4:8]
+                extracted_seq = int(seq_str)
+            except ValueError:
+                extracted_seq = 0
+                
+            content = uploaded_v22.getvalue().decode("latin-1")
+            lines = content.replace('\r\n', '\n').split('\n')
+            library_name = "UNKNOWN"
+            album_code = "UNKNOWN"
+            for line in lines:
+                if line.startswith("ORN") and len(line) >= 96:
+                    library_name = line[22:82].strip()
+                    album_code = line[82:96].strip()
+                    break
+            
+            new_label = f"{extracted_seq:04d} {album_code} {library_name}".strip()
+            st.write(f"Detected: **{new_label}**")
+            
+            if st.button("Mark as Officially Accepted"):
+                if not any(item["sequence"] == extracted_seq for item in history):
+                    seq_data["history"].append({"sequence": extracted_seq, "label": new_label})
+                    with open(SEQ_FILE, 'w') as f:
+                        json.dump(seq_data, f)
+                    st.success("Logged successfully!")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.warning("Sequence already logged.")
+    st.caption(f"Operator Session Active")
