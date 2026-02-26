@@ -95,15 +95,24 @@ st.markdown("""
         text-align: center;
     }
     
-    /* Center Streamlit Tabs Container */
-    div[data-testid="stTabs"] > div[role="tablist"] {
+    /* Center Streamlit Image (Logo) */
+    div[data-testid="stImage"] {
+        display: flex;
         justify-content: center;
-        gap: 1.5rem;
+        align-items: center;
+    }
+
+    /* Container for Streamlit Tabs */
+    div[data-testid="stTabs"] > div[role="tablist"] {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        gap: 2rem;
     }
     
     /* Custom Styling for the Tabs */
     button[data-baseweb="tab"] {
-        width: 200px !important;
+        flex: 1 !important;
         height: 60px !important;
         border-radius: 12px !important;
         display: flex !important;
@@ -148,10 +157,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Centered Logo and Title Spacer
-st.markdown("<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: -1rem;'>", unsafe_allow_html=True)
+st.markdown("<div style='margin-bottom: -1rem;'></div>", unsafe_allow_html=True)
 if os.path.exists("lumina_logo.png"):
     st.image("lumina_logo.png", width=240)
-st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<h1 class='main-title'>Lumina CWR Suite</h1>", unsafe_allow_html=True)
 
