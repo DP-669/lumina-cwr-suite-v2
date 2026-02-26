@@ -152,7 +152,7 @@ st.markdown("""
 # Centered Logo and Title Spacer
 st.markdown("<div style='margin-bottom: -1rem;'></div>", unsafe_allow_html=True)
 if os.path.exists("lumina_logo.png"):
-    _, col_logo, _ = st.columns([3, 2, 3])
+    _, col_logo, _ = st.columns([1, 2, 1])
     with col_logo:
         st.image("lumina_logo.png", use_container_width=True)
 
