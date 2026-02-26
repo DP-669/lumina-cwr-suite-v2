@@ -94,13 +94,6 @@ st.markdown("""
     div[data-testid="metric-container"] {
         text-align: center;
     }
-    
-    /* Center Streamlit Image (Logo) */
-    div[data-testid="stImage"] {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
 
     /* Container for Streamlit Tabs */
     div[data-testid="stTabs"] > div[role="tablist"] {
@@ -159,7 +152,9 @@ st.markdown("""
 # Centered Logo and Title Spacer
 st.markdown("<div style='margin-bottom: -1rem;'></div>", unsafe_allow_html=True)
 if os.path.exists("lumina_logo.png"):
-    st.image("lumina_logo.png", width=240)
+    _, col_logo, _ = st.columns([3, 2, 3])
+    with col_logo:
+        st.image("lumina_logo.png", use_container_width=True)
 
 st.markdown("<h1 class='main-title'>Lumina CWR Suite</h1>", unsafe_allow_html=True)
 
@@ -482,3 +477,49 @@ with tab_gen:
                         st.error(f"FATAL ERROR: {e}")
 
 # --- 6. TASK: VALIDATOR ---
+with tab_val:
+    st.markdown("<h2 class='sub-title'>CWR 2.2 Validator</h2>", unsafe_allow_html=True)
+    
+    # Center the file uploader in a smaller column
+    col_v_space1, col_v_main, col_v_space2 = st.columns([1, 2, 1])
+    
+    with col_v_main:
+        v22_file = st.file_uploader("Upload .V22 file", type=["V22", "cwr"], label_visibility="collapsed")
+        
+        if v22_file:
+            content = v22_file.getvalue().decode("latin-1")
+            st.markdown("<div class='run-btn-container'>", unsafe_allow_html=True)
+            run_inspection = st.button("Run Inspection", use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            if run_inspection:
+                rep, stats = CWRValidator().process_file(content)
+                transaction_count = len([l for l in content.splitlines() if l.startswith('NWR')])
+                
+                st.write("---")
+                
+                # Center Metrics & Display
+                st.metric("Transactions", transaction_count)
+                
+                if not rep and transaction_count > 0: 
+                    st.success("Syntax Valid.")
+                elif transaction_count == 0:
+                    st.warning("No transactions found.")
+                else: 
+                    st.error(f"Found {len(rep)} issues.")
+                    
+                    criticals = [i for i in rep if i['level'] in ['CRITICAL', 'ERROR']]
+                    warnings = [i for i in rep if i['level'] == 'WARNING']
+                    
+                    if criticals:
+                        st.markdown("### 🔴 Critical Errors (Must Fix)")
+                        for item in criticals:
+                            st.error(f"**Line {item['line']}**: {item['message']}")
+                    
+                    if warnings:
+                        st.markdown("### 🟡 Warnings (Review)")
+                        for item in warnings:
+                            st.warning(f"**Line {item['line']}**: {item['message']}")
+                            
+                    if not criticals and not warnings:
+                        st.success("File is fully compliant!")
