@@ -132,7 +132,7 @@ next_sequence = max([item["sequence"] for item in history] + [0]) + 1
 
 # --- 4. NAVIGATION TABS ---
 st.write("") # Spacer
-tab_gen, tab_val, tab_health = st.tabs(["⚡ Generator", "🛡️ Validator", "⚙️ System Health"])
+tab_gen, tab_val = st.tabs(["⚡ Generator", "🛡️ Validator"])
 
 # --- 5. TASK: GENERATOR ---
 with tab_gen:
@@ -384,103 +384,56 @@ with tab_gen:
         
         *Note: V2.20 logic is strictly enforced.*
         """)
+        
+        st.markdown("---")
+        st.subheader("Accepted Ledger")
+        st.caption("Sequence History")
+        
+        # Move the Ledger display into a scrollable container
+        ledger_container = st.container(height=150)
+        with ledger_container:
+            if history:
+                for item in reversed(history): # Show newest first
+                    st.markdown(f"- **{item['sequence']:04d}** {item['label'].split(' ', 1)[-1]}")
+            else:
+                st.markdown("- *No accepted records yet*")
+                
+        st.write("")
+        cwr_sequence = st.number_input("Next Sequence Override", min_value=1, max_value=9999, value=int(next_sequence), step=1)
+        
+        with st.expander("Log Accepted Registration"):
+            uploaded_v22 = st.file_uploader("Upload accepted .V22", type=["V22", "cwr"], key="logger_uploader")
+            if uploaded_v22:
+                filename_up = uploaded_v22.name
+                try:
+                    seq_str = filename_up[4:8]
+                    extracted_seq = int(seq_str)
+                except ValueError:
+                    extracted_seq = 0
+                    
+                content = uploaded_v22.getvalue().decode("latin-1")
+                lines = content.replace('\r\n', '\n').split('\n')
+                library_name = "UNKNOWN"
+                album_code = "UNKNOWN"
+                for line in lines:
+                    if line.startswith("ORN") and len(line) >= 96:
+                        library_name = line[22:82].strip()
+                        album_code = line[82:96].strip()
+                        break
+                
+                new_label = f"{extracted_seq:04d} {album_code} {library_name}".strip()
+                st.write(f"Detected: **{new_label}**")
+                
+                if st.button("Mark as Officially Accepted"):
+                    if not any(item["sequence"] == extracted_seq for item in history):
+                        seq_data["history"].append({"sequence": extracted_seq, "label": new_label})
+                        with open(SEQ_FILE, 'w') as f:
+                            json.dump(seq_data, f)
+                        st.success("Logged successfully!")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.warning("Sequence already logged.")
+        st.caption(f"Operator Session Active")
 
 # --- 6. TASK: VALIDATOR ---
-with tab_val:
-    st.markdown("<h2 class='sub-title'>CWR 2.2 Validator</h2>", unsafe_allow_html=True)
-    
-    # Center the file uploader in a smaller column
-    col_v_space1, col_v_main, col_v_space2 = st.columns([1, 2, 1])
-    
-    with col_v_main:
-        v22_file = st.file_uploader("Upload .V22 file", type=["V22", "cwr"], label_visibility="collapsed")
-        
-        if v22_file:
-            content = v22_file.getvalue().decode("latin-1")
-            st.markdown("<div class='run-btn-container'>", unsafe_allow_html=True)
-            run_inspection = st.button("Run Inspection", use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            if run_inspection:
-                rep, stats = CWRValidator().process_file(content)
-                transaction_count = len([l for l in content.splitlines() if l.startswith('NWR')])
-                
-                st.write("---")
-                
-                # Center Metrics & Display
-                st.metric("Transactions", transaction_count)
-                
-                if not rep and transaction_count > 0: 
-                    st.success("Syntax Valid.")
-                elif transaction_count == 0:
-                    st.warning("No transactions found.")
-                else: 
-                    st.error(f"Found {len(rep)} issues.")
-                    
-                    criticals = [i for i in rep if i['level'] in ['CRITICAL', 'ERROR']]
-                    warnings = [i for i in rep if i['level'] == 'WARNING']
-                    
-                    if criticals:
-                        st.markdown("### 🔴 Critical Errors (Must Fix)")
-                        for item in criticals:
-                            st.error(f"**Line {item['line']}**: {item['message']}")
-                    
-                    if warnings:
-                        st.markdown("### 🟡 Warnings (Review)")
-                        for item in warnings:
-                            st.warning(f"**Line {item['line']}**: {item['message']}")
-                            
-                    if not criticals and not warnings:
-                        st.success("File is fully compliant!")
-
-# --- 7. TASK: SYSTEM HEALTH ---
-with tab_health:
-    st.markdown("<h2 class='sub-title'>System Integrity</h2>", unsafe_allow_html=True)
-    st.write(f"**Connected to Google Drive:** {'YES' if os.path.exists(config.LOCAL_DRIVE_PATH) else 'NO'}")
-    st.write(f"**Vault Status:** {'SECURE CLOUD' if 'LUMINA_CONFIG' in st.secrets else 'LOCAL CONFIG'}")
-    
-    st.markdown("---")
-    st.subheader("Accepted Ledger (Sequence History)")
-    if history:
-        for item in history:
-            st.markdown(f"- {item['label']}")
-    else:
-        st.markdown("- *No accepted records yet*")
-        
-    st.markdown("---")
-    cwr_sequence = st.number_input("Next Sequence Override", min_value=1, max_value=9999, value=int(next_sequence), step=1)
-    
-    with st.expander("Log Accepted Registration manually"):
-        uploaded_v22 = st.file_uploader("Upload accepted .V22", type=["V22", "cwr"], key="logger_uploader")
-        if uploaded_v22:
-            filename_up = uploaded_v22.name
-            try:
-                seq_str = filename_up[4:8]
-                extracted_seq = int(seq_str)
-            except ValueError:
-                extracted_seq = 0
-                
-            content = uploaded_v22.getvalue().decode("latin-1")
-            lines = content.replace('\r\n', '\n').split('\n')
-            library_name = "UNKNOWN"
-            album_code = "UNKNOWN"
-            for line in lines:
-                if line.startswith("ORN") and len(line) >= 96:
-                    library_name = line[22:82].strip()
-                    album_code = line[82:96].strip()
-                    break
-            
-            new_label = f"{extracted_seq:04d} {album_code} {library_name}".strip()
-            st.write(f"Detected: **{new_label}**")
-            
-            if st.button("Mark as Officially Accepted"):
-                if not any(item["sequence"] == extracted_seq for item in history):
-                    seq_data["history"].append({"sequence": extracted_seq, "label": new_label})
-                    with open(SEQ_FILE, 'w') as f:
-                        json.dump(seq_data, f)
-                    st.success("Logged successfully!")
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.warning("Sequence already logged.")
-    st.caption(f"Operator Session Active")
