@@ -100,10 +100,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Top Right Logo Space (Placeholder, assume absolute positioning or columns)
+# Top Right Logo Space
 col_logo_spacer, col_logo = st.columns([8, 2])
 with col_logo:
-    st.markdown("<p style='text-align: right; color: #8C8C8C; font-size: 0.8rem; font-weight: 600;'>LUMINA PUBLISHING LTD.</p>", unsafe_allow_html=True)
+    if os.path.exists("lumina_logo.png"):
+        st.image("lumina_logo.png", width=120)
+    else:
+        st.markdown("<p style='text-align: right; color: #8C8C8C; font-size: 0.8rem; font-weight: 600;'>LUMINA PUBLISHING LTD.</p>", unsafe_allow_html=True)
 
 st.markdown("<h1 class='main-title'>Lumina CWR Suite</h1>", unsafe_allow_html=True)
 
