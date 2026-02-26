@@ -376,16 +376,6 @@ with tab_gen:
                         st.error(f"FATAL ERROR: {e}")
 
     with col2:
-        st.info("""
-        **Workflow Guide**
-        1. Select source CSV.
-        2. Validate agreement mapping.
-        3. Submit to ICE Berlin.
-        
-        *Note: V2.20 logic is strictly enforced.*
-        """)
-        
-        st.markdown("---")
         st.subheader("Accepted Ledger")
         st.caption("Sequence History")
         
