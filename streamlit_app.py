@@ -327,14 +327,14 @@ with tab_gen:
                                 if len(l) != 182:
                                     raise ValueError(f"PRE-FLIGHT FAIL: {rec_type} record length must be exactly 182 characters. Found: {len(l)}")
                             
-                        # CHECK 4: Dual REC records ('C' and 'D')
+                        # CHECK 4: Single CD Source REC record validation
                         import re
                         rec_lines = [l for l in cwr_lines if l.startswith("REC")]
-                        c_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'C'])
-                        d_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'D'])
-                        # Assuming 1 C and 1 D per NWR
-                        if c_sources == 0 or d_sources == 0 or c_sources != d_sources:
-                            raise ValueError("PRE-FLIGHT FAIL: Works are missing Dual REC records (Source C and D mismatch)")
+                        nwr_count = len([l for l in cwr_lines if l.startswith("NWR")])
+                        cd_sources = len([l for l in rec_lines if len(l) > 264 and l[262:265] == 'CD ' or l[262:264] == 'CD'])
+                        
+                        if cd_sources != nwr_count:
+                            raise ValueError(f"PRE-FLIGHT FAIL: Works are missing matching CD Source REC records (Found {cd_sources} REC 'CD' for {nwr_count} NWR Works)")
                         
                         st.write(f"Syncing {filename} to Google Drive...")
                         
@@ -454,12 +454,13 @@ with tab_gen:
                                     if len(l) != 182:
                                         raise ValueError(f"PRE-FLIGHT FAIL: {rec_type} record length must be exactly 182 characters. Found: {len(l)}")
                                 
-                            # CHECK 4: Dual REC records ('C' and 'D')
+                            # CHECK 4: Single CD Source REC record validation
                             rec_lines = [l for l in cwr_lines if l.startswith("REC")]
-                            c_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'C'])
-                            d_sources = len([l for l in rec_lines if len(l) > 262 and l[262] == 'D'])
-                            if c_sources == 0 or d_sources == 0 or c_sources != d_sources:
-                                raise ValueError("PRE-FLIGHT FAIL: Works are missing Dual REC records (Source C and D mismatch)")
+                            nwr_count = len([l for l in cwr_lines if l.startswith("NWR")])
+                            cd_sources = len([l for l in rec_lines if len(l) > 264 and l[262:265] == 'CD ' or l[262:264] == 'CD'])
+                            
+                            if cd_sources != nwr_count:
+                                raise ValueError(f"PRE-FLIGHT FAIL: Works are missing matching CD Source REC records (Found {cd_sources} REC 'CD' for {nwr_count} NWR Works)")
                                 
                             st.success("CWR 2.2 File Ready")
                             

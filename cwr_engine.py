@@ -34,11 +34,8 @@ def pad_ipi(v):
     return re.sub(r'\D', '', str(v)).zfill(11) if v and str(v).upper() != 'NAN' else "00000000000"
 
 def generate_cwr_content(df, agreement_map=None):
-    df.columns = [c.strip().upper() for c in df.columns]
+    df.columns = [str(c).strip().upper() for c in df.columns]
     REQUIRED = ['TRACK: TITLE', 'CODE: ISRC', 'ALBUM: CODE', 'LIBRARY: NAME']
-    # If using Harvest format, normalize the keys first
-    if 'WORK TITLE' in df.columns:
-        df = df.rename(columns={'WORK TITLE': 'TRACK: TITLE', 'ALBUM CODE': 'ALBUM: CODE', 'LIBRARY NAME': 'LIBRARY: NAME'})
 
     for col in REQUIRED:
         if col not in df.columns: raise KeyError(f"MANDATORY COLUMN MISSING: {col}")
