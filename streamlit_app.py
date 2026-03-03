@@ -486,6 +486,7 @@ with tab_val:
     
     with col_v_main:
         v22_file = st.file_uploader("Upload .V22 file", type=["V22", "cwr"], label_visibility="collapsed")
+        csv_file = st.file_uploader("Upload Source CSV file (Optional for Mirror Audit)", type=["csv"], label_visibility="collapsed")
         
         if v22_file:
             content = v22_file.getvalue().decode("latin-1")
@@ -494,7 +495,7 @@ with tab_val:
             st.markdown("</div>", unsafe_allow_html=True)
             
             if run_inspection:
-                rep, stats = CWRValidator().process_file(content)
+                rep, stats = CWRValidator().process_file(content, csv_source=csv_file)
                 transaction_count = len([l for l in content.splitlines() if l.startswith('NWR')])
                 
                 st.write("---")

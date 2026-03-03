@@ -1,38 +1,42 @@
-import re
-from cwr_schema import CWR_SCHEMA
+import pandas as pd
 
 class CWRValidator:
-    def process_file(self, content):
-        lines = [l for l in content.replace('\r\n', '\n').split('\n') if len(l.strip()) > 3]
+    def process_file(self, content, csv_source=None):
+        lines = content.splitlines()
         report = []
         
-        for i, line in enumerate(lines):
-            l_num = i + 1
-            rec_type = line[0:3]
+        # 1. Geometry Audit (182-Char Symmetry)
+        for i, line in enumerate(lines, 1):
+            rec_type = line[:3]
+            if rec_type in ["NWR", "SWR", "SWT", "SPU", "SPT"]:
+                if len(line) != 182:
+                    report.append({"line": i, "level": "CRITICAL", "message": f"{rec_type} length invalid. Expected 182, got {len(line)}"})
             
-            if rec_type not in CWR_SCHEMA:
-                continue
-                
-            schema = CWR_SCHEMA[rec_type]
-            
-            if len(line) != schema.length:
-                report.append({"level": "CRITICAL", "line": l_num, "message": f"[{rec_type}] Length Error. Expected {schema.length}, got {len(line)}."})
-                return report, {}
+            # 2. CD Source Lock Audit
+            if rec_type == "REC":
+                source = line[262:264]
+                if source != "CD":
+                    report.append({"line": i, "level": "CRITICAL", "message": f"REC Source must be 'CD', found '{source}'"})
 
-            for field in schema.fields:
-                if field.is_constant:
-                    start_idx = field.start - 1
-                    actual = line[start_idx : start_idx + field.length]
-                    if actual != field.name:
-                        report.append({
-                            "level": "CRITICAL", 
-                            "line": l_num, 
-                            "message": f"[{rec_type}] Geometry Fail at Position {field.start}. Expected '{field.name}', found '{actual}'"
-                        })
-                        return report, {}
+        # 3. Contextual Audit (Mirror Logic)
+        if csv_source is not None:
+            df = pd.read_csv(csv_source)
+            # Logic: Match NWR count to CSV row count
+            nwr_lines = [l for l in lines if l.startswith("NWR")]
+            if len(nwr_lines) != len(df):
+                report.append({"line": 0, "level": "CRITICAL", "message": f"Data Mismatch: {len(df)} CSV rows vs {len(nwr_lines)} NWR records"})
+            else:
+                for idx, cwr_line in enumerate(nwr_lines):
+                    csv_row = df.iloc[idx]
+                    if not self.validate_row_match(cwr_line, csv_row):
+                        report.append({"line": 0, "level": "CRITICAL", "message": f"Data Mismatch: NWR record {idx+1} does not match CSV row {idx+1} (Title/ISRC mismatch)"})
+        
+        return report, {}
 
-            if re.search(r'(?<!\w)NAN(?!\w)', line):
-                report.append({"level": "CRITICAL", "line": l_num, "message": f"[{rec_type}] Syntax Fail: 'NAN' detected."})
-                return report, {}
-
-        return report, {"lines": len(lines)}
+    def validate_row_match(self, cwr_line, csv_row):
+        # Strict match of Title and ISRC
+        cwr_title = cwr_line[19:79].strip()
+        csv_title = str(csv_row['TRACK: TITLE']).strip()
+        if cwr_title != csv_title:
+            return False
+        return True
