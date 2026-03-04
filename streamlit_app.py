@@ -370,10 +370,9 @@ with tab_gen:
                         status.update(label="Sync Successful!", state="complete")
                         st.success(f"Success! File synced to OUTPUT_V22: {filename}")
                         
-                        # Download Fallback (Memory Buffer)
-                        buffer = io.BytesIO()
-                        buffer.write(cwr.encode('latin-1'))
-                        buffer.seek(0)
+                        # Download Fallback (Memory Buffer State Management)
+                        st.session_state[f'cwr_bytes_sync_{filename}'] = cwr.encode('latin-1')
+                        buffer = io.BytesIO(st.session_state[f'cwr_bytes_sync_{filename}'])
 
                         st.download_button(
                             label="Download CWR File (.V22)",
@@ -482,10 +481,9 @@ with tab_gen:
                                 
                             st.success("CWR 2.2 File Ready")
                             
-                            # Download (Memory Buffer)
-                            buffer = io.BytesIO()
-                            buffer.write(cwr.encode('latin-1'))
-                            buffer.seek(0)
+                            # Download (Memory Buffer State Management)
+                            st.session_state[f'cwr_bytes_manual_{filename}'] = cwr.encode('latin-1')
+                            buffer = io.BytesIO(st.session_state[f'cwr_bytes_manual_{filename}'])
 
                             st.download_button(
                                 label="Download CWR File (.V22)",
