@@ -47,11 +47,13 @@ class CWRValidator:
         return report, {}
 
     def validate_row_match(self, cwr_line, csv_row):
-        # Strict Match: No Truncation allowed. 
-        # CWR engine already truncated the title during build; if CSV title is > 60, it will not match.
+        # Extract fields
         cwr_title = cwr_line[19:79].strip()
         csv_title = str(csv_row.get('TRACK: TITLE', '')).strip()
         
-        if cwr_title != csv_title[:60]: 
+        # STRICT ENFORCEMENT: 
+        # If the CSV title does not equal the CWR title exactly, 
+        # it is a CRITICAL mismatch. No implicit truncation allowed.
+        if cwr_title != csv_title:
             return False
         return True
