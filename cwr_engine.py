@@ -5,10 +5,19 @@ from config import LUMINA_CONFIG, AGREEMENT_MAP
 from cwr_schema import CWR_SCHEMA
 
 class FormatterEngine:
-    def stamp(self, canvas: list, position: int, length: int, value: str, data_type: str, pad_char: str):
+    def stamp(self, canvas: list, position: int, length: int, value: str, data_type: str, pad_char: str, field_name: str, data_dict: dict):
         start_idx = position - 1
         val_str = str(value if value is not None else "").strip().upper()
         if val_str in ['NAN', 'NONE']: val_str = ""
+        
+        # Data Integrity Firewall: Check length BEFORE padding
+        if len(val_str) > length:
+            track_info = data_dict.get('title', 'Unknown Track')
+            raise ValueError(
+                f"CRITICAL: Data truncation prevented. Track '{track_info}' - Field '{field_name}' "
+                f"exceeds max length of {length}. Automation halted."
+            )
+            
         if data_type == "numeric":
             padded_val = val_str.zfill(length)[:length]
         else:
@@ -23,7 +32,7 @@ class FormatterEngine:
         canvas = [' '] * record_def.length
         for field in record_def.fields:
             val = field.name if field.is_constant else data_dict.get(field.name, "")
-            self.stamp(canvas, field.start, field.length, val, field.data_type, field.pad_char)
+            self.stamp(canvas, field.start, field.length, val, field.data_type, field.pad_char, field.name, data_dict)
         return "".join(canvas)
 
 def fmt_share(v): 

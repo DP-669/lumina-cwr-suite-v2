@@ -370,16 +370,16 @@ with tab_gen:
                         status.update(label="Sync Successful!", state="complete")
                         st.success(f"Success! File synced to OUTPUT_V22: {filename}")
                         
-                        # Download Fallback
-                        zip_buffer = io.BytesIO()
-                        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-                            zip_file.writestr(filename, cwr)
+                        # Download Fallback (Memory Buffer)
+                        buffer = io.BytesIO()
+                        buffer.write(cwr.encode('latin-1'))
+                        buffer.seek(0)
 
                         st.download_button(
-                            label="Download CWR Archive (ZIP)",
-                            data=zip_buffer.getvalue(),
-                            file_name=f"{filename}.zip",
-                            mime="application/zip"
+                            label="Download CWR File (.V22)",
+                            data=buffer,
+                            file_name=filename,
+                            mime="text/plain"
                         )
                 except Exception as e:
                     st.error(f"FATAL ERROR: {e}")
@@ -482,15 +482,16 @@ with tab_gen:
                                 
                             st.success("CWR 2.2 File Ready")
                             
-                            zip_buffer = io.BytesIO()
-                            with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-                                zip_file.writestr(filename, cwr)
+                            # Download (Memory Buffer)
+                            buffer = io.BytesIO()
+                            buffer.write(cwr.encode('latin-1'))
+                            buffer.seek(0)
 
                             st.download_button(
-                                label="Download CWR Archive (ZIP)",
-                                data=zip_buffer.getvalue(),
-                                file_name=f"{filename}.zip",
-                                mime="application/zip"
+                                label="Download CWR File (.V22)",
+                                data=buffer,
+                                file_name=filename,
+                                mime="text/plain"
                             )
                     except Exception as e:
                         st.error(f"FATAL ERROR: {e}")
