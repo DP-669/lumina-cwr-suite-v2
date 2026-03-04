@@ -50,7 +50,7 @@ class CWRValidator:
                         rep.append({
                             "level": "CRITICAL",
                             "line": line_num,
-                            "message": f"SOURCE LOCK FAIL: REC source at pos 263 is '{source_val}', MUST be 'CD'.",
+                            "message": f"CRITICAL: REC Source must be 'CD'. Found '{source_val}' at pos 263.",
                             "content": line[250:270]
                         })
                         
