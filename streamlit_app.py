@@ -288,6 +288,15 @@ with tab_gen:
                                 st.error(f"CRITICAL: Change the ISRC ('{isrc}'). It must be exactly 12 characters.")
                                 st.stop()
                                 
+                            # Album Code (exists and <= 60 chars)
+                            album_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['ALBUM: CODE', 'ALBUM CODE', 'ALBUM']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['ALBUM: CODE', 'ALBUM CODE', 'ALBUM']]) > 0 else '').strip()
+                            if not album_val:
+                                st.error("CRITICAL: Missing ALBUM: CODE.")
+                                st.stop()
+                            if len(album_val) > 60:
+                                st.error(f"CRITICAL: Change the Album Code ('{album_val}'). It exceeds 60 characters.")
+                                st.stop()
+                                
                             # Label / Library (60 chars)
                             label_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['LIBRARY NAME', 'LABEL', 'LIBRARY: NAME']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['LIBRARY NAME', 'LABEL', 'LIBRARY: NAME']]) > 0 else '').strip()
                             if len(label_val) > 60:
@@ -410,6 +419,15 @@ with tab_gen:
                                 isrc = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['CODE: ISRC', 'ISRC']]) > 0 else '').strip()
                                 if isrc and len(isrc) != 12:
                                     st.error(f"CRITICAL: Change the ISRC ('{isrc}'). It must be exactly 12 characters.")
+                                    st.stop()
+                                    
+                                # Album Code (exists and <= 60 chars)
+                                album_val = str(pd.Series([row[c] for c in df.columns if str(c).upper() in ['ALBUM: CODE', 'ALBUM CODE', 'ALBUM']]).dropna().iloc[0] if len([row[c] for c in df.columns if str(c).upper() in ['ALBUM: CODE', 'ALBUM CODE', 'ALBUM']]) > 0 else '').strip()
+                                if not album_val:
+                                    st.error("CRITICAL: Missing ALBUM: CODE.")
+                                    st.stop()
+                                if len(album_val) > 60:
+                                    st.error(f"CRITICAL: Change the Album Code ('{album_val}'). It exceeds 60 characters.")
                                     st.stop()
                                     
                                 # Label / Library (60 chars)
