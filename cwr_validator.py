@@ -2,9 +2,21 @@ import pandas as pd
 import io
 
 class CWRValidator:
-    def process_file(self, cwr_content: str, csv_content: bytes = None) -> tuple:
+    def process_file(self, cwr_content: str, csv_content: bytes = None, filename: str = None) -> tuple:
         rep = []
         stats = {"transactions": 0}
+        
+        # --- 0. FILENAME AUDIT ---
+        if filename:
+            import re
+            pattern = r"^CW\d{2}\d{4}LUM_319\.V22$"
+            if not re.match(pattern, filename):
+                rep.append({
+                    "level": "CRITICAL",
+                    "line": 0,
+                    "message": f"FILENAME REJECTION: '{filename}' does not match mandatory CWR 2.2 pattern CW[YY][NNNN]LUM_319.V22",
+                    "content": ""
+                })
         
         # Strip newlines but preserve exact trailing space geometry per line
         lines = [line.strip('\r\n') for line in cwr_content.split('\n') if line.strip('\r\n')]
@@ -53,6 +65,31 @@ class CWRValidator:
                             "message": f"CRITICAL: REC Source must be 'CD'. Found '{source_val}' at pos 263.",
                             "content": line[250:270]
                         })
+                        
+        # --- 1.5. PR SHARE AUDIT (WRITER TOTAL = 10000) ---
+        swr_shares = {}
+        for line in lines:
+            if len(line) < 11:
+                continue
+            rec_type = line[0:3]
+            if rec_type == 'NWR':
+                swr_shares[line[3:11]] = 0
+            elif rec_type == 'SWR':
+                t_seq = line[3:11]
+                if t_seq in swr_shares:
+                    try:
+                        swr_shares[t_seq] += int(line[129:134].strip() or 0)
+                    except ValueError:
+                        pass
+        
+        for t_seq, total_share in swr_shares.items():
+            if total_share != 10000:
+                rep.append({
+                    "level": "CRITICAL",
+                    "line": 0,
+                    "message": f"PR SHARE FAIL: Work with seq '{t_seq}' has Writer PR shares summing to {total_share}. MUST be exactly 10000 (no 0.5 multiplier).",
+                    "content": ""
+                })
                         
         # --- 2. MIRROR AUDIT (CONTEXTUAL TRUTH CHECK) ---
         if csv_content:

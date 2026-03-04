@@ -40,7 +40,7 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("UNC", 127, 3, is_constant=True),
         FieldDef("duration", 130, 6, data_type="numeric"),
         FieldDef("Y", 136, 1, is_constant=True),
-        FieldDef("ORI", 143, 3, is_constant=True)
+        FieldDef("ORI", 142, 3, is_constant=True)
     ]),
     "SPU": RecordDef("SPU", 182, [
         FieldDef("SPU", 1, 3, is_constant=True),

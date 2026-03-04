@@ -379,13 +379,16 @@ with tab_gen:
                     st.error(f"FATAL ERROR: {e}")
                     
             if 'cwr_bytes_sync' in st.session_state and 'filename_sync' in st.session_state:
-                buffer = io.BytesIO(st.session_state['cwr_bytes_sync'])
+                filename = st.session_state['filename_sync']
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                    zf.writestr(filename, st.session_state['cwr_bytes_sync'])
                 
                 st.download_button(
-                    label="Download CWR File (.V22)",
-                    data=buffer,
-                    file_name=st.session_state['filename_sync'],
-                    mime="text/plain"
+                    label="Download Secure CWR Archive (ZIP)",
+                    data=zip_buffer.getvalue(),
+                    file_name=f"{filename}.zip",
+                    mime="application/zip"
                 )
         else:
             uploaded_file = st.file_uploader("Upload CSV file manually", type="csv")
@@ -495,13 +498,16 @@ with tab_gen:
                         st.error(f"FATAL ERROR: {e}")
                         
                 if 'cwr_bytes_manual' in st.session_state and 'filename_manual' in st.session_state:
-                    buffer = io.BytesIO(st.session_state['cwr_bytes_manual'])
+                    filename = st.session_state['filename_manual']
+                    zip_buffer = io.BytesIO()
+                    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                        zf.writestr(filename, st.session_state['cwr_bytes_manual'])
                     
                     st.download_button(
-                        label="Download CWR File (.V22)",
-                        data=buffer,
-                        file_name=st.session_state['filename_manual'],
-                        mime="text/plain"
+                        label="Download Secure CWR Archive (ZIP)",
+                        data=zip_buffer.getvalue(),
+                        file_name=f"{filename}.zip",
+                        mime="application/zip"
                     )
 
 # --- 6. TASK: VALIDATOR ---
@@ -525,7 +531,7 @@ with tab_val:
         
         if run_inspection:
             validator = CWRValidator()
-            rep, stats = validator.process_file(cwr_content, csv_content=csv_content)
+            rep, stats = validator.process_file(cwr_content, csv_content=csv_content, filename=v22_file.name)
             
             st.write("---")
             st.metric("Transactions (NWR Count)", stats["transactions"])
