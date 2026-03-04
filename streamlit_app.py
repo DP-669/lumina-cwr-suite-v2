@@ -370,18 +370,23 @@ with tab_gen:
                         status.update(label="Sync Successful!", state="complete")
                         st.success(f"Success! File synced to OUTPUT_V22: {filename}")
                         
-                        # Download Fallback (Memory Buffer State Management)
-                        st.session_state[f'cwr_bytes_sync_{filename}'] = cwr.encode('latin-1')
-                        buffer = io.BytesIO(st.session_state[f'cwr_bytes_sync_{filename}'])
-
-                        st.download_button(
-                            label="Download CWR File (.V22)",
-                            data=buffer,
-                            file_name=filename,
-                            mime="text/plain"
-                        )
+                        # State Management for Download Rerun Fix
+                        st.session_state[f'cwr_bytes_sync'] = cwr.encode('latin-1')
+                        st.session_state[f'filename_sync'] = filename
+                        
+                        st.rerun()
                 except Exception as e:
                     st.error(f"FATAL ERROR: {e}")
+                    
+            if 'cwr_bytes_sync' in st.session_state and 'filename_sync' in st.session_state:
+                buffer = io.BytesIO(st.session_state['cwr_bytes_sync'])
+                
+                st.download_button(
+                    label="Download CWR File (.V22)",
+                    data=buffer,
+                    file_name=st.session_state['filename_sync'],
+                    mime="text/plain"
+                )
         else:
             uploaded_file = st.file_uploader("Upload CSV file manually", type="csv")
             if uploaded_file:
@@ -481,18 +486,23 @@ with tab_gen:
                                 
                             st.success("CWR 2.2 File Ready")
                             
-                            # Download (Memory Buffer State Management)
-                            st.session_state[f'cwr_bytes_manual_{filename}'] = cwr.encode('latin-1')
-                            buffer = io.BytesIO(st.session_state[f'cwr_bytes_manual_{filename}'])
-
-                            st.download_button(
-                                label="Download CWR File (.V22)",
-                                data=buffer,
-                                file_name=filename,
-                                mime="text/plain"
-                            )
+                            # State Management for Download Rerun Fix
+                            st.session_state['cwr_bytes_manual'] = cwr.encode('latin-1')
+                            st.session_state['filename_manual'] = filename
+                            
+                            st.rerun()
                     except Exception as e:
                         st.error(f"FATAL ERROR: {e}")
+                        
+                if 'cwr_bytes_manual' in st.session_state and 'filename_manual' in st.session_state:
+                    buffer = io.BytesIO(st.session_state['cwr_bytes_manual'])
+                    
+                    st.download_button(
+                        label="Download CWR File (.V22)",
+                        data=buffer,
+                        file_name=st.session_state['filename_manual'],
+                        mime="text/plain"
+                    )
 
 # --- 6. TASK: VALIDATOR ---
 with tab_val:
