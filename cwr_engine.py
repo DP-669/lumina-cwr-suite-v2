@@ -81,22 +81,28 @@ def generate_cwr_content(df, agreement_map=None):
             p_mr_soc = str(row.get(f"PUBLISHER:{p_idx}: MRO", "021")).split('.')[0].zfill(3)
             p_sr_soc = str(row.get(f"PUBLISHER:{p_idx}: SRO", "021")).split('.')[0].zfill(3)
 
+            # SPU Record Coordinate Lock for ICE
+            spu_suffix = f"PG{agr}" 
+            
             lines.append(engine.build("SPU", {
                 **work_data, "rec_seq": f"{rec_seq:08d}", "chain_id": f"{p_idx:02d}",
                 "pub_id": f"00000000{p_idx}", "pub_name": p_name, "role": "E ", "ipi": p_ipi,
                 "pr_soc": p_pr_soc if p_pr_soc != "000" and p_pr_soc.upper() != "NAN" else "021",
                 "mr_soc": p_mr_soc if p_mr_soc != "000" and p_mr_soc.upper() != "NAN" else "021",
                 "sr_soc": p_sr_soc if p_sr_soc != "000" and p_sr_soc.upper() != "NAN" else "021",
-                "pr_share": pr_share, "mr_share": "10000", "sr_share": "10000", "agreement": agr
+                "pr_share": pr_share, "mr_share": "10000", "sr_share": "10000", "agreement": spu_suffix.rjust(28)[:14]
             }))
             rec_seq += 1
             
             lum_id = "000000012"
+            # SPU Record Coordinate Lock for ICE
+            spu_suffix = f"PG{agr}"
+            
             lines.append(engine.build("SPU", {
                 **work_data, "rec_seq": f"{rec_seq:08d}", "chain_id": f"{p_idx:02d}",
                 "pub_id": lum_id, "pub_name": LUMINA_CONFIG.get('name', 'LUMINA'), "role": "SE", "ipi": full_ipi,
                 "pr_soc": "052", "mr_soc": "033", "sr_soc": "033",
-                "pr_share": "00000", "mr_share": "00000", "sr_share": "00000", "agreement": agr
+                "pr_share": "00000", "mr_share": "00000", "sr_share": "00000", "agreement": spu_suffix.rjust(28)[:14]
             }))
             rec_seq += 1
             

@@ -34,6 +34,13 @@ class CWRValidator:
             if record_type == 'NWR':
                 stats["transactions"] += 1
                 nwr_records.append({"line_num": line_num, "content": line})
+                if len(line) >= 144 and line[141:144] != 'ORI':
+                    rep.append({
+                        "level": "CRITICAL",
+                        "line": line_num,
+                        "message": "ORI Anchor point shifted. Must be at Position 142.",
+                        "content": line[130:150]
+                    })
             elif record_type == 'REC':
                 rec_records.append({"line_num": line_num, "content": line})
             
