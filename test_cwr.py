@@ -37,15 +37,17 @@ def test_zero_truncation_mirror_audit():
     """Verify the validator throws contextual mismatch on titles > 60 chars."""
     validator = CWRValidator()
     
-    # Valid: 60 char title exactly matches
-    csv_row_valid = {'TRACK: TITLE': 'A' * 60}
-    cwr_line_valid = ' ' * 19 + 'A' * 60 + ' ' * 100
-    assert validator.validate_row_match(cwr_line_valid, csv_row_valid) == True
+    # Valid: 60 char title exactly matches length
+    csv_valid = "TRACK: TITLE,ALBUM: CODE,CODE: ISRC,LIBRARY: NAME\n" + ("A" * 60) + ",ALB1,USX1,LIB1\n"
+    cwr_nwr_valid = "NWR" + " " * 16 + ("A" * 60) + " " * (182 - 3 - 16 - 60)
+    rep, _ = validator.process_file(cwr_nwr_valid, csv_content=csv_valid.encode('utf-8'))
+    assert not any("CRITICAL_MISMATCH" in r["message"] for r in rep)
     
-    # Invalid: 61 char title truncated in CWR to 60 must explicitly fail CSV validation
-    csv_row_invalid = {'TRACK: TITLE': 'A' * 61}
-    cwr_line_invalid = ' ' * 19 + 'A' * 60 + ' ' * 100
-    assert validator.validate_row_match(cwr_line_invalid, csv_row_invalid) == False
+    # Invalid: 61 char title must explicitly fail CSV validation
+    csv_invalid = "TRACK: TITLE,ALBUM: CODE,CODE: ISRC,LIBRARY: NAME\n" + ("A" * 61) + ",ALB1,USX1,LIB1\n"
+    cwr_nwr_invalid = "NWR" + " " * 16 + ("A" * 60) + " " * (182 - 3 - 16 - 60)
+    rep, _ = validator.process_file(cwr_nwr_invalid, csv_content=csv_invalid.encode('utf-8'))
+    assert any("CRITICAL_MISMATCH" in r["message"] for r in rep)
 
 def test_validator_cd_source():
     """Verify the validator flags mismatched REC sources."""

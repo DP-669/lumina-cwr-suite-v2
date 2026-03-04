@@ -498,49 +498,49 @@ with tab_gen:
 
 # --- 6. TASK: VALIDATOR ---
 with tab_val:
-    st.markdown("<h2 class='sub-title'>CWR 2.2 Validator</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='sub-title'>CWR Mirror Audit Validator</h2>", unsafe_allow_html=True)
+    st.write("<div style='text-align: center; color: #8C8C8C; margin-bottom: 2rem;'>Cross-examine CWR output against its original CSV source to guarantee zero truncation and perfect geometry.</div>", unsafe_allow_html=True)
     
-    # Center the file uploader in a smaller column
-    col_v_space1, col_v_main, col_v_space2 = st.columns([1, 2, 1])
-    
-    with col_v_main:
-        v22_file = st.file_uploader("Upload .V22 file", type=["V22", "cwr"], label_visibility="collapsed")
-        csv_file = st.file_uploader("Upload Source CSV file (Optional for Mirror Audit)", type=["csv"], label_visibility="collapsed")
+    col_v1, col_v2 = st.columns(2)
+    with col_v1:
+        v22_file = st.file_uploader("1. Upload Generated .V22", type=["V22", "cwr"])
+    with col_v2:
+        csv_source = st.file_uploader("2. Upload Source CSV (Optional, enables Mirror Audit)", type=["csv"])
         
-        if v22_file:
-            content = v22_file.getvalue().decode("latin-1")
-            st.markdown("<div class='run-btn-container'>", unsafe_allow_html=True)
-            run_inspection = st.button("Run Inspection", use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+    if v22_file:
+        cwr_content = v22_file.getvalue().decode("latin-1")
+        csv_content = csv_source.getvalue() if csv_source else None
+        
+        st.markdown("<div class='run-btn-container'>", unsafe_allow_html=True)
+        run_inspection = st.button("Run Strict Inspection", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        if run_inspection:
+            validator = CWRValidator()
+            rep, stats = validator.process_file(cwr_content, csv_content=csv_content)
             
-            if run_inspection:
-                rep, stats = CWRValidator().process_file(content, csv_source=csv_file)
-                transaction_count = len([l for l in content.splitlines() if l.startswith('NWR')])
+            st.write("---")
+            st.metric("Transactions (NWR Count)", stats["transactions"])
+            
+            if not rep and stats["transactions"] > 0: 
+                st.success("Syntax & Geometry Valid. Mirror Audit Passed.")
+            elif stats["transactions"] == 0:
+                st.warning("No transactions found.")
+            else: 
+                st.error(f"Found {len(rep)} Architectural Violations.")
                 
-                st.write("---")
+                criticals = [i for i in rep if i['level'] in ['CRITICAL', 'ERROR']]
+                warnings = [i for i in rep if i['level'] == 'WARNING']
                 
-                # Center Metrics & Display
-                st.metric("Transactions", transaction_count)
+                if criticals:
+                    st.markdown("### 🔴 CRITICAL ERRORS (Must Fix)")
+                    for item in criticals:
+                        st.error(f"**Line {item['line']}**: {item['message']}")
+                        if item.get('content'):
+                            with st.expander("View Context"):
+                                st.code(item['content'])
                 
-                if not rep and transaction_count > 0: 
-                    st.success("Syntax Valid.")
-                elif transaction_count == 0:
-                    st.warning("No transactions found.")
-                else: 
-                    st.error(f"Found {len(rep)} issues.")
-                    
-                    criticals = [i for i in rep if i['level'] in ['CRITICAL', 'ERROR']]
-                    warnings = [i for i in rep if i['level'] == 'WARNING']
-                    
-                    if criticals:
-                        st.markdown("### 🔴 Critical Errors (Must Fix)")
-                        for item in criticals:
-                            st.error(f"**Line {item['line']}**: {item['message']}")
-                    
-                    if warnings:
-                        st.markdown("### 🟡 Warnings (Review)")
-                        for item in warnings:
-                            st.warning(f"**Line {item['line']}**: {item['message']}")
-                            
-                    if not criticals and not warnings:
-                        st.success("File is fully compliant!")
+                if warnings:
+                    st.markdown("### 🟡 Warnings (Review)")
+                    for item in warnings:
+                        st.warning(f"**Line {item['line']}**: {item['message']}")

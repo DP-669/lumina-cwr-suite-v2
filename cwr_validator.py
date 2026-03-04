@@ -1,59 +1,101 @@
 import pandas as pd
+import io
 
 class CWRValidator:
-    def process_file(self, content, csv_source=None):
-        lines = content.splitlines()
-        report = []
+    def process_file(self, cwr_content: str, csv_content: bytes = None) -> tuple:
+        rep = []
+        stats = {"transactions": 0}
         
-        # 1. Geometry Audit (182-Char Symmetry)
-        for i, line in enumerate(lines, 1):
-            rec_type = line[:3]
-            if rec_type in ["NWR", "SWR", "SWT", "SPU", "SPT"]:
+        # Strip newlines but preserve exact trailing space geometry per line
+        lines = [line.strip('\r\n') for line in cwr_content.split('\n') if line.strip('\r\n')]
+        
+        nwr_records = []
+        rec_records = []
+        
+        # --- 1. GEOMETRY AND SYNTAX AUDIT ---
+        strict_182_records = ['NWR', 'SPU', 'SWR', 'SPT', 'SWT']
+        
+        for i, line in enumerate(lines):
+            line_num = i + 1
+            record_type = line[0:3]
+            
+            if record_type == 'NWR':
+                stats["transactions"] += 1
+                nwr_records.append({"line_num": line_num, "content": line})
+            elif record_type == 'REC':
+                rec_records.append({"line_num": line_num, "content": line})
+            
+            # Geometry Audit
+            if record_type in strict_182_records:
                 if len(line) != 182:
-                    report.append({"line": i, "level": "CRITICAL", "message": f"{rec_type} length invalid. Expected 182, got {len(line)}"})
+                    rep.append({
+                        "level": "CRITICAL",
+                        "line": line_num,
+                        "message": f"GEOMETRY FAIL: {record_type} record length is {len(line)}, MUST be exactly 182 characters.",
+                        "content": f"Length: {len(line)} | Preview: {line[:50]}..."
+                    })
             
-            # 2. CD Source Lock Audit
-            if rec_type == "REC":
-                source = line[262:264]
-                if source != "CD":
-                    report.append({"line": i, "level": "CRITICAL", "message": f"REC Source must be 'CD', found '{source}'"})
-
-        # 3. Mirror Audit (Contextual Match)
-        if csv_source is not None:
-            csv_source.seek(0)
-            df_preview = pd.read_csv(csv_source, header=None, nrows=20)
-            h_idx = -1
-            MARKERS = ["TRACK: TITLE", "SOURCEAUDIO ID", "TITLE", "LIBRARY: NAME", "WORK TITLE"]
-            for i, row in df_preview.iterrows():
-                if any(m in row.astype(str).str.cat(sep=" ").upper() for m in MARKERS):
-                    h_idx = i; break
-            
-            if h_idx != -1:
-                csv_source.seek(0)
-                df = pd.read_csv(csv_source, header=h_idx)
-                df.columns = [str(c).strip().upper() for c in df.columns]
-                if 'WORK TITLE' in df.columns: df = df.rename(columns={'WORK TITLE': 'TRACK: TITLE'})
-                
-                nwr_lines = [l for l in lines if l.startswith("NWR")]
-                if len(nwr_lines) != len(df):
-                    report.append({"line": 0, "level": "CRITICAL", "message": f"Data Mismatch: {len(df)} CSV rows vs {len(nwr_lines)} NWR records"})
+            # CD Source Lock Audit
+            if record_type == 'REC':
+                if len(line) < 264:
+                    rep.append({
+                        "level": "CRITICAL",
+                        "line": line_num,
+                        "message": f"REC GEOMETRY FAIL: REC record length is {len(line)}, cannot inspect Position 263.",
+                        "content": line[:50] + "..."
+                    })
                 else:
-                    for cwr_line, csv_row in zip(nwr_lines, df.to_dict('records')):
-                        if not self.validate_row_match(cwr_line, csv_row):
-                            cwr_title = cwr_line[19:79].strip()
-                            csv_title = str(csv_row.get('TRACK: TITLE', '')).strip()
-                            report.append({"line": 0, "level": "CRITICAL", "message": f"Title Mismatch: CWR='{cwr_title}' | CSV='{csv_title}'"})
-        
-        return report, {}
+                    source_val = line[262:264]
+                    if source_val != 'CD':
+                        rep.append({
+                            "level": "CRITICAL",
+                            "line": line_num,
+                            "message": f"SOURCE LOCK FAIL: REC source at pos 263 is '{source_val}', MUST be 'CD'.",
+                            "content": line[250:270]
+                        })
+                        
+        # --- 2. MIRROR AUDIT (CONTEXTUAL TRUTH CHECK) ---
+        if csv_content:
+            try:
+                df = pd.read_csv(io.BytesIO(csv_content))
+                
+                # Header Target Match
+                df.columns = [str(c).replace('ï»¿', '').replace('"', '').strip().upper() for c in df.columns]
+                
+                if 'TRACK: TITLE' not in df.columns:
+                    rep.append({
+                        "level": "CRITICAL",
+                        "line": 0,
+                        "message": "MIRROR AUDIT FAIL: CSV missing required 'TRACK: TITLE' column.",
+                        "content": "Headers: " + ", ".join(df.columns)
+                    })
+                else:
+                    csv_titles = df['TRACK: TITLE'].astype(str).str.strip().tolist()
+                    
+                    # Zero-Truncation Match: Count Verification
+                    if len(nwr_records) != len(csv_titles):
+                        rep.append({
+                            "level": "CRITICAL",
+                            "line": 0,
+                            "message": f"MIRROR AUDIT FAIL: NWR generation count ({len(nwr_records)}) does not match source CSV row count ({len(csv_titles)}).",
+                            "content": ""
+                        })
+                        
+                    # Truncation Rule Verification
+                    for idx, csv_title in enumerate(csv_titles):
+                        if len(csv_title) > 60:
+                            rep.append({
+                                "level": "CRITICAL",
+                                "line": idx + 1,
+                                "message": f"CRITICAL_MISMATCH: CSV Title '{csv_title}' exceeds 60 characters. File contains illegal silent truncation.",
+                                "content": f"Title Length: {len(csv_title)}"
+                            })
+            except Exception as e:
+                rep.append({
+                    "level": "ERROR",
+                    "line": 0,
+                    "message": f"MIRROR AUDIT FAIL: Could not parse CSV source - {str(e)}",
+                    "content": ""
+                })
 
-    def validate_row_match(self, cwr_line, csv_row):
-        # Extract fields
-        cwr_title = cwr_line[19:79].strip()
-        csv_title = str(csv_row.get('TRACK: TITLE', '')).strip()
-        
-        # STRICT ENFORCEMENT: 
-        # If the CSV title does not equal the CWR title exactly, 
-        # it is a CRITICAL mismatch. No implicit truncation allowed.
-        if cwr_title != csv_title:
-            return False
-        return True
+        return rep, stats
