@@ -79,13 +79,14 @@ def generate_cwr_content(df, agreement_map=None):
             p_ipi = pad_ipi(row.get(f"PUBLISHER:{p_idx}: IPI", "00000000000"))
             p_pr_soc = str(row.get(f"PUBLISHER:{p_idx}: PRO", "021")).split('.')[0].zfill(3)
             p_mr_soc = str(row.get(f"PUBLISHER:{p_idx}: MRO", "021")).split('.')[0].zfill(3)
-            p_sr_soc = str(row.get(f"PUBLISHER:{p_idx}: SRO", "021")).split('.')[0].zfill(3)
-
+            p_mr_soc = str(row.get(f"PUBLISHER:{p_idx}: MRO", "021")).split('.')[0].zfill(3)
+            # DO NOT RE-INTRODUCE sr_soc OR sr_share HERE. SPU Share Block must be exactly 16 digits long.
             lines.append(engine.build("SPU", {
                 **work_data, "rec_seq": f"{rec_seq:08d}", "chain_id": f"{p_idx:02d}",
                 "pub_id": f"00000000{p_idx}", "pub_name": p_name, "role": "E ", "ipi": p_ipi,
                 "pr_soc": p_pr_soc if p_pr_soc != "000" and p_pr_soc.upper() != "NAN" else "021",
                 "mr_soc": p_mr_soc if p_mr_soc != "000" and p_mr_soc.upper() != "NAN" else "021",
+                # DO NOT RE-INTRODUCE sr_share INTO SPU RECORD
                 "pr_share": pr_share, "mr_share": "10000", 
                 "agreement_1": agr, "agreement_2": agr
             }))
