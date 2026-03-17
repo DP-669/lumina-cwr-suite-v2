@@ -15,17 +15,14 @@ def test_spu_suffixes():
     """Verify that SPU suffixes conform to exact physical positions required."""
     spu_fields = {f.name: f for f in CWR_SCHEMA["SPU"].fields}
     
-    assert spu_fields["agreement"].start == 141
-    assert spu_fields["agreement"].length == 14
+    assert spu_fields["agreement_1"].start == 141
+    assert spu_fields["agreement_1"].length == 14
     
-    assert spu_fields["P"].start == 161
-    assert spu_fields["P"].length == 1
+    assert spu_fields["PG"].start == 161
+    assert spu_fields["PG"].length == 2
     
-    assert spu_fields["G"].start == 162
-    assert spu_fields["G"].length == 1
-    
-    assert spu_fields["4316161"].start == 163
-    assert spu_fields["4316161"].length == 7
+    assert spu_fields["agreement_2"].start == 163
+    assert spu_fields["agreement_2"].length == 14
 
 def test_rec_source_lock():
     """Verify that REC record defines a single CD source at exact coordinates."""

@@ -43,6 +43,15 @@ class CWRValidator:
                     })
             elif record_type == 'REC':
                 rec_records.append({"line_num": line_num, "content": line})
+            elif record_type == 'SPU':
+                pg_idx = line.find('PG')
+                if pg_idx != -1 and pg_idx != 160:
+                    rep.append({
+                        "level": "CRITICAL",
+                        "line": line_num,
+                        "message": f"SPU GEOMETRY FAIL: 'PG' string found at index {pg_idx} (Pos {pg_idx+1}). MUST be exactly at Index 160 (Position 161).",
+                        "content": line[140:175]
+                    })
             
             # Geometry Audit
             if record_type in strict_182_records:

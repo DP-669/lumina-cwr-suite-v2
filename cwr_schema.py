@@ -55,13 +55,9 @@ CWR_SCHEMA: Dict[str, RecordDef] = {
         FieldDef("pr_share", 116, 5, data_type="numeric"),
         FieldDef("mr_soc", 121, 3),
         FieldDef("mr_share", 124, 5, data_type="numeric"),
-        FieldDef("sr_soc", 129, 3),
-        FieldDef("sr_share", 132, 5, data_type="numeric"),
-        FieldDef("N", 138, 1, is_constant=True),
-        FieldDef("agreement", 141, 14),
-        FieldDef("P", 161, 1, is_constant=True),
-        FieldDef("G", 162, 1, is_constant=True),
-        FieldDef("4316161", 163, 7, is_constant=True)
+        FieldDef("agreement_1", 141, 14),
+        FieldDef("PG", 161, 2, is_constant=True),
+        FieldDef("agreement_2", 163, 14)
     ]),
     "SWR": RecordDef("SWR", 182, [
         FieldDef("SWR", 1, 3, is_constant=True),
